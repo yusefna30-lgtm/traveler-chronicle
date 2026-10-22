@@ -40,7 +40,9 @@
     
     #photoPreview { width: 100%; max-height: 220px; object-fit: cover; border-radius: 8px; display: none; border: 1px solid var(--gold); }
 
+    /* خريطة بتنسيق ليلي */
     #map { height: 220px; width: 100%; border-radius: 12px; border: 1px solid var(--border); }
+    .leaflet-tile { filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7); }
 
     .stamps-list { display: flex; flex-direction: column; gap: 14px; }
     .stamp-card { background: var(--card); border: 1px dashed var(--gold); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
@@ -67,7 +69,6 @@
   <div class="action-box">
     <input type="text" id="journeyNote" class="note-input" placeholder="اكتب ذكرى هذه المحطة (اختياري)..." />
     
-    <!-- خيارين: فتح الكاميرا مباشرة أو اختيار صورة من الألبوم -->
     <div class="photo-actions">
       <label for="cameraInput" class="photo-btn">
         📸 فتح الكاميرا
@@ -104,7 +105,6 @@
   let journeys = JSON.parse(localStorage.getItem('shirt_journeys_v3') || '[]');
   let capturedBase64 = null;
 
-  // معالجة وضغط الصورة لضمان ظهورها وحفظها بدون مشاكل
   function handleImage(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -116,7 +116,6 @@
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         
-        // ضبط أقصى عرض لـ 500 بكسل حتى لا تثقل الذاكرة
         let width = img.width;
         let height = img.height;
         const maxDim = 500;
@@ -145,7 +144,9 @@
 
   function initMap() {
     map = L.map('map').setView([24.7136, 46.6753], 5);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    // خريطة OpenStreetMap المفتوحة والمجانية 100%
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
       attribution: '&copy; OpenStreetMap'
     }).addTo(map);
     renderJourneys();
@@ -205,12 +206,10 @@
       try {
         localStorage.setItem('shirt_journeys_v3', JSON.stringify(journeys));
       } catch (err) {
-        console.warn("Storage full, trimmed last");
         journeys.pop();
         localStorage.setItem('shirt_journeys_v3', JSON.stringify(journeys));
       }
       
-      // تفريغ الحقول بعد الحفظ
       document.getElementById('journeyNote').value = "";
       document.getElementById('photoPreview').style.display = "none";
       document.getElementById('cameraInput').value = "";
@@ -261,14 +260,14 @@
       const marker = L.circleMarker([j.lat, j.lng], {
         color: '#d4af37',
         fillColor: '#aa820a',
-        fillOpacity: 0.85,
+        fillOpacity: 0.9,
         radius: 8
       }).addTo(map);
       marker.bindPopup(`<b>${j.city}</b><br>${j.date}<br>${j.weather}`);
       markers.push(marker);
     });
 
-    map.setView([journeys[0].lat, journeys[0].lng], 6);
+    map.setView([journeys[0].lat, journeys[0].lng], 8);
   }
 
   window.onload = initMap;
