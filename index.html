@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Traveler's Chronicle | سجل الرحالة</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    :root {
+      --bg: #0d0f12;
+      --card: #161a20;
+      --gold: #d4af37;
+      --text: #ffffff;
+      --muted: #8b949e;
+      --border: #2d333b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+    .container { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 20px; }
+    
+    /* رأس الصفحة والشعار */
+    header { text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
+    .badge { display: inline-block; padding: 4px 12px; border: 1px solid var(--gold); border-radius: 20px; color: var(--gold); font-size: 0.75rem; font-weight: bold; letter-spacing: 1px; margin-bottom: 8px; }
+    h1 { font-size: 1.4rem; color: var(--text); }
+    p.sub { font-size: 0.85rem; color: var(--muted); margin-top: 4px; }
+
+    /* صندوق الزر التفاعلي */
+    .action-box { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+    .btn-stamp { width: 100%; background: linear-gradient(135deg, #d4af37, #aa820a); color: #000; border: none; padding: 14px; border-radius: 10px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-stamp:active { transform: scale(0.98); }
+    .note-input { width: 100%; background: #0d0f12; border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 10px; margin-top: 12px; font-size: 0.85rem; }
+
+    /* الخريطة */
+    #map { height: 260px; width: 100%; border-radius: 12px; border: 1px solid var(--border); }
+
+    /* قائمة الأختام والرحلات */
+    .stamps-list { display: flex; flex-direction: column; gap: 12px; }
+    .stamp-card { background: var(--card); border: 1px dashed var(--gold); border-radius: 10px; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+    .stamp-city { font-weight: bold; font-size: 1.1rem; color: var(--gold); }
+    .stamp-date { font-size: 0.75rem; color: var(--muted); }
+    .stamp-note { font-size: 0.85rem; color: var(--text); margin-top: 5px; }
+    .empty-state { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 20px; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="badge">NFC PASSPORT EDITION</div>
+    <h1>سجل الرحالة الذكي</h1>
+    <p class="sub">وثّق أثر خطاك في كل مدينة يمر بها التيشيرت</p>
+  </header>
+
+  <div class="action-box">
+    <button class="btn-stamp" onclick="recordLocation()">
+      📍 توثيق موقع التيشيرت الحالي
+    </button>
+    <input type="text" id="journeyNote" class="note-input" placeholder="اكتب ذكرى سريعة لهذه المحطة (اختياري)..." />
+    <p id="statusMsg" style="font-size: 0.8rem; color: var(--gold); margin-top: 8px; display: none;"></p>
+  </div>
+
+  <div id="map"></div>
+
+  <div>
+    <h3 style="font-size: 1rem; margin-bottom: 10px; color: var(--gold);">محطات التيشيرت السابقة</h3>
+    <div class="stamps-list" id="stampsContainer">
+      <div class="empty-state">لم يتم توثيق أي محطة بعد. قرّب التيشيرت واضغط على الزر أعلاه!</div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  let map, markers = [];
+  let journeys = JSON.parse(localStorage.getItem('shirt_journeys') || '[]');
+
+  // إعداد الخريطة
+  function initMap() {
+    map = L.map('map').setView([24.7136, 46.6753], 5); // افتراضياً الرياض
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+    renderJourneys();
+  }
+
+  // التقاط الموقع وتوثيقه
+  function recordLocation() {
+    const status = document.getElementById('statusMsg');
+    const note = document.getElementById('journeyNote').value;
+    status.style.display = 'block';
+    status.innerText = "جاري الاتصال بالأقمار الصناعية لتحديد موقعك...";
+
+    if (!navigator.geolocation) {
+      status.innerText = "المتصفح لا يدعم تحديد الموقع.";
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      
+      // جلب اسم المدينة برمجياً من الإحداثيات
+      let cityName = "محطة جديدة";
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+        const data = await res.json();
+        cityName = data.address.city || data.address.state || data.address.country || "محطة غير محددة";
+      } catch(e) {}
+
+      const newEntry = {
+        city: cityName,
+        lat: lat,
+        lng: lng,
+        note: note,
+        date: new Date().toLocaleDateString('ar-SA', { year: 'numeric', month: 'short', day: 'numeric' })
+      };
+
+      journeys.unshift(newEntry);
+      localStorage.setItem('shirt_journeys', JSON.stringify(journeys));
+      document.getElementById('journeyNote').value = "";
+      status.innerText = `تم توثيق محطة: ${cityName} بنجاح! 🎯`;
+      renderJourneys();
+    }, () => {
+      status.innerText = "تعذر تحديد الموقع. تأكد من تفعيل الـ GPS في هاتفك.";
+    });
+  }
+
+  // عرض المحطات على الخريطة والقائمة
+  function renderJourneys() {
+    const list = document.getElementById('stampsContainer');
+    list.innerHTML = "";
+    markers.forEach(m => map.removeLayer(m));
+    markers = [];
+
+    if (journeys.length === 0) {
+      list.innerHTML = `<div class="empty-state">لم يتم توثيق أي محطة بعد.</div>`;
+      return;
+    }
+
+    journeys.forEach(j => {
+      // إضافة للبطاقات
+      const card = document.createElement('div');
+      card.className = "stamp-card";
+      card.innerHTML = `
+        <div>
+          <div class="stamp-city">📍 ${j.city}</div>
+          ${j.note ? `<div class="stamp-note">${j.note}</div>` : ''}
+        </div>
+        <div class="stamp-date">${j.date}</div>
+      `;
+      list.appendChild(card);
+
+      // إضافة للخريطة
+      const marker = L.circleMarker([j.lat, j.lng], {
+        color: '#d4af37',
+        fillColor: '#aa820a',
+        fillOpacity: 0.8,
+        radius: 8
+      }).addTo(map);
+      marker.bindPopup(`<b>${j.city}</b><br>${j.date}`);
+      markers.push(marker);
+    });
+
+    map.setView([journeys[0].lat, journeys[0].lng], 6);
+  }
+
+  window.onload = initMap;
+</script>
+</body>
+</html>
