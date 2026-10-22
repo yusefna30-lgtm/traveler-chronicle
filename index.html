@@ -3,43 +3,58 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Traveler's Chronicle | سجل الرحالة</title>
+  <title>The Traveler's Chronicle | سجل الرحالة الذكي</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     :root {
       --bg: #0d0f12;
       --card: #161a20;
       --gold: #d4af37;
+      --gold-dark: #aa820a;
       --text: #ffffff;
       --muted: #8b949e;
       --border: #2d333b;
+      --danger: #e63946;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background-color: var(--bg); color: var(--text); padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-    .container { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 20px; }
+    body { background-color: var(--bg); color: var(--text); padding: 18px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+    .container { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 18px; }
     
-    /* رأس الصفحة والشعار */
-    header { text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
-    .badge { display: inline-block; padding: 4px 12px; border: 1px solid var(--gold); border-radius: 20px; color: var(--gold); font-size: 0.75rem; font-weight: bold; letter-spacing: 1px; margin-bottom: 8px; }
+    /* رأس الصفحة */
+    header { text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 14px; }
+    .badge { display: inline-block; padding: 4px 14px; border: 1px solid var(--gold); border-radius: 20px; color: var(--gold); font-size: 0.75rem; font-weight: bold; letter-spacing: 1px; margin-bottom: 8px; }
     h1 { font-size: 1.4rem; color: var(--text); }
     p.sub { font-size: 0.85rem; color: var(--muted); margin-top: 4px; }
 
-    /* صندوق الزر التفاعلي */
-    .action-box { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
-    .btn-stamp { width: 100%; background: linear-gradient(135deg, #d4af37, #aa820a); color: #000; border: none; padding: 14px; border-radius: 10px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    /* صندوق إدخال المحطة الجديدة */
+    .action-box { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+    .btn-stamp { width: 100%; background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #000; border: none; padding: 13px; border-radius: 10px; font-weight: bold; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .btn-stamp:active { transform: scale(0.98); }
-    .note-input { width: 100%; background: #0d0f12; border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 10px; margin-top: 12px; font-size: 0.85rem; }
+    
+    .note-input { width: 100%; background: #0d0f12; border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 11px; font-size: 0.85rem; }
+    .note-input:focus { outline: none; border-color: var(--gold); }
+
+    /* حقل اختيار وتصوير الكاميرا */
+    .photo-upload-label { display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px dashed var(--border); border-radius: 8px; padding: 10px; font-size: 0.85rem; color: var(--gold); cursor: pointer; background: rgba(212, 175, 55, 0.05); }
+    .photo-upload-label:hover { border-color: var(--gold); }
+    #photoInput { display: none; }
+    #photoPreview { width: 100%; height: 160px; object-fit: cover; border-radius: 8px; display: none; border: 1px solid var(--gold); }
 
     /* الخريطة */
-    #map { height: 260px; width: 100%; border-radius: 12px; border: 1px solid var(--border); }
+    #map { height: 230px; width: 100%; border-radius: 12px; border: 1px solid var(--border); }
 
     /* قائمة الأختام والرحلات */
-    .stamps-list { display: flex; flex-direction: column; gap: 12px; }
-    .stamp-card { background: var(--card); border: 1px dashed var(--gold); border-radius: 10px; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
-    .stamp-city { font-weight: bold; font-size: 1.1rem; color: var(--gold); }
+    .stamps-list { display: flex; flex-direction: column; gap: 14px; }
+    .stamp-card { background: var(--card); border: 1px dashed var(--gold); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; position: relative; }
+    .stamp-header { display: flex; justify-content: space-between; align-items: flex-start; }
+    .stamp-city { font-weight: bold; font-size: 1.15rem; color: var(--gold); }
+    .stamp-weather { font-size: 0.8rem; color: #64b5f6; display: flex; align-items: center; gap: 4px; margin-top: 3px; }
     .stamp-date { font-size: 0.75rem; color: var(--muted); }
-    .stamp-note { font-size: 0.85rem; color: var(--text); margin-top: 5px; }
-    .empty-state { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 20px; }
+    .stamp-img { width: 100%; height: 180px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); }
+    .stamp-note { font-size: 0.9rem; color: #ececec; line-height: 1.4; background: rgba(0,0,0,0.25); padding: 8px 10px; border-radius: 6px; }
+    .btn-delete { background: none; border: none; color: var(--muted); font-size: 0.8rem; cursor: pointer; align-self: flex-end; padding: 4px; }
+    .btn-delete:hover { color: var(--danger); }
+    .empty-state { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 25px; }
   </style>
 </head>
 <body>
@@ -48,21 +63,29 @@
   <header>
     <div class="badge">NFC PASSPORT EDITION</div>
     <h1>سجل الرحالة الذكي</h1>
-    <p class="sub">وثّق أثر خطاك في كل مدينة يمر بها التيشيرت</p>
+    <p class="sub">وثّق أثر خطاك، صورك، والطقس في كل محطة</p>
   </header>
 
   <div class="action-box">
+    <input type="text" id="journeyNote" class="note-input" placeholder="اكتب ذكرى هذه المحطة (اختياري)..." />
+    
+    <!-- زر التقاط صورة -->
+    <label for="photoInput" class="photo-upload-label" id="photoLabel">
+      📷 التقاط أو إرفاق صورة تذكارية
+    </label>
+    <input type="file" id="photoInput" accept="image/*" onchange="previewImage(event)">
+    <img id="photoPreview" alt="معاينة الصورة" />
+
     <button class="btn-stamp" onclick="recordLocation()">
-      📍 توثيق موقع التيشيرت الحالي
+      📍 توثيق المحطة مع الطقس والصورة
     </button>
-    <input type="text" id="journeyNote" class="note-input" placeholder="اكتب ذكرى سريعة لهذه المحطة (اختياري)..." />
-    <p id="statusMsg" style="font-size: 0.8rem; color: var(--gold); margin-top: 8px; display: none;"></p>
+    <p id="statusMsg" style="font-size: 0.8rem; color: var(--gold); text-align: center; display: none;"></p>
   </div>
 
   <div id="map"></div>
 
   <div>
-    <h3 style="font-size: 1rem; margin-bottom: 10px; color: var(--gold);">محطات التيشيرت السابقة</h3>
+    <h3 style="font-size: 1rem; margin-bottom: 12px; color: var(--gold);">محطات التيشيرت الموثقة</h3>
     <div class="stamps-list" id="stampsContainer">
       <div class="empty-state">لم يتم توثيق أي محطة بعد. قرّب التيشيرت واضغط على الزر أعلاه!</div>
     </div>
@@ -72,23 +95,64 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
   let map, markers = [];
-  let journeys = JSON.parse(localStorage.getItem('shirt_journeys') || '[]');
+  let journeys = JSON.parse(localStorage.getItem('shirt_journeys_v2') || '[]');
+  let currentBase64Image = null;
 
-  // إعداد الخريطة
+  // معاينة الصورة وضغطها لتخزينها محلياً
+  function previewImage(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        // ضغط الصورة تلقائياً للحفاظ على مساحة المتصفح
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 600;
+        const scaleSize = MAX_WIDTH / img.width;
+        canvas.width = MAX_WIDTH;
+        canvas.height = img.height * scaleSize;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        currentBase64Image = canvas.toDataURL('image/jpeg', 0.7);
+
+        const preview = document.getElementById('photoPreview');
+        preview.src = currentBase64Image;
+        preview.style.display = 'block';
+        document.getElementById('photoLabel').innerText = "✓ تم اختيار الصورة (اضغط لتغييرها)";
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // إعداد الخريطة الليلية
   function initMap() {
-    map = L.map('map').setView([24.7136, 46.6753], 5); // افتراضياً الرياض
+    map = L.map('map').setView([24.7136, 46.6753], 5);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; OpenStreetMap'
     }).addTo(map);
     renderJourneys();
   }
 
-  // التقاط الموقع وتوثيقه
-  function recordLocation() {
+  // جلب الطقس عبر Open-Meteo المجاني
+  async function getWeather(lat, lng) {
+    try {
+      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true`);
+      const data = await res.json();
+      return `${Math.round(data.current_weather.temperature)}°C`;
+    } catch(e) {
+      return null;
+    }
+  }
+
+  // التوثيق الكامل
+  async function recordLocation() {
     const status = document.getElementById('statusMsg');
     const note = document.getElementById('journeyNote').value;
     status.style.display = 'block';
-    status.innerText = "جاري الاتصال بالأقمار الصناعية لتحديد موقعك...";
+    status.innerText = "جاري التقاط الإحداثيات والطقس...";
 
     if (!navigator.geolocation) {
       status.innerText = "المتصفح لا يدعم تحديد الموقع.";
@@ -99,33 +163,56 @@
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
       
-      // جلب اسم المدينة برمجياً من الإحداثيات
+      // جلب اسم المدينة والطقس في نفس اللحظة
       let cityName = "محطة جديدة";
+      let weatherInfo = "طقس معتدل";
+
       try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
-        const data = await res.json();
+        const [geoRes, weatherRes] = await Promise.all([
+          fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`),
+          getWeather(lat, lng)
+        ]);
+        const data = await geoRes.json();
         cityName = data.address.city || data.address.state || data.address.country || "محطة غير محددة";
+        if (weatherRes) weatherInfo = weatherRes;
       } catch(e) {}
 
       const newEntry = {
+        id: Date.now(),
         city: cityName,
         lat: lat,
         lng: lng,
+        weather: weatherInfo,
         note: note,
+        photo: currentBase64Image,
         date: new Date().toLocaleDateString('ar-SA', { year: 'numeric', month: 'short', day: 'numeric' })
       };
 
       journeys.unshift(newEntry);
-      localStorage.setItem('shirt_journeys', JSON.stringify(journeys));
+      localStorage.setItem('shirt_journeys_v2', JSON.stringify(journeys));
+      
+      // إعادة ضبط الحقول
       document.getElementById('journeyNote').value = "";
-      status.innerText = `تم توثيق محطة: ${cityName} بنجاح! 🎯`;
+      document.getElementById('photoInput').value = "";
+      document.getElementById('photoPreview').style.display = "none";
+      document.getElementById('photoLabel').innerText = "📷 التقاط أو إرفاق صورة تذكارية";
+      currentBase64Image = null;
+
+      status.innerText = `تم توثيق المحطة بنجاح في ${cityName}! ✨`;
       renderJourneys();
     }, () => {
-      status.innerText = "تعذر تحديد الموقع. تأكد من تفعيل الـ GPS في هاتفك.";
+      status.innerText = "يرجى منح إذن الوصول للموقع (GPS) ليتم التوثيق.";
     });
   }
 
-  // عرض المحطات على الخريطة والقائمة
+  // حذف محطة محددة
+  function deleteEntry(id) {
+    journeys = journeys.filter(item => item.id !== id);
+    localStorage.setItem('shirt_journeys_v2', JSON.stringify(journeys));
+    renderJourneys();
+  }
+
+  // عرض المحطات
   function renderJourneys() {
     const list = document.getElementById('stampsContainer');
     list.innerHTML = "";
@@ -138,26 +225,29 @@
     }
 
     journeys.forEach(j => {
-      // إضافة للبطاقات
       const card = document.createElement('div');
       card.className = "stamp-card";
       card.innerHTML = `
-        <div>
-          <div class="stamp-city">📍 ${j.city}</div>
-          ${j.note ? `<div class="stamp-note">${j.note}</div>` : ''}
+        <div class="stamp-header">
+          <div>
+            <div class="stamp-city">📍 ${j.city}</div>
+            <div class="stamp-weather">🌤️ درجة الحرارة: ${j.weather}</div>
+          </div>
+          <div class="stamp-date">${j.date}</div>
         </div>
-        <div class="stamp-date">${j.date}</div>
+        ${j.photo ? `<img src="${j.photo}" class="stamp-img" alt="صورة المحطة" />` : ''}
+        ${j.note ? `<div class="stamp-note">${j.note}</div>` : ''}
+        <button class="btn-delete" onclick="deleteEntry(${j.id})">حذف المحطة ✕</button>
       `;
       list.appendChild(card);
 
-      // إضافة للخريطة
       const marker = L.circleMarker([j.lat, j.lng], {
         color: '#d4af37',
         fillColor: '#aa820a',
-        fillOpacity: 0.8,
+        fillOpacity: 0.85,
         radius: 8
       }).addTo(map);
-      marker.bindPopup(`<b>${j.city}</b><br>${j.date}`);
+      marker.bindPopup(`<b>${j.city}</b><br>${j.date}<br>${j.weather}`);
       markers.push(marker);
     });
 
