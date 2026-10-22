@@ -32,7 +32,6 @@
     .note-input { width: 100%; background: #0d0f12; border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 11px; font-size: 0.85rem; }
     .note-input:focus { outline: none; border-color: var(--gold); }
 
-    /* خيارات الصور */
     .photo-actions { display: flex; gap: 10px; }
     .photo-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px dashed var(--gold); border-radius: 8px; padding: 10px; font-size: 0.8rem; color: var(--gold); cursor: pointer; background: rgba(212, 175, 55, 0.05); text-align: center; }
     .photo-btn:active { background: rgba(212, 175, 55, 0.15); }
@@ -40,9 +39,8 @@
     
     #photoPreview { width: 100%; max-height: 220px; object-fit: cover; border-radius: 8px; display: none; border: 1px solid var(--gold); }
 
-    /* خريطة بتنسيق ليلي */
-    #map { height: 220px; width: 100%; border-radius: 12px; border: 1px solid var(--border); }
-    .leaflet-tile { filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7); }
+    /* حاوية خريطة الأقمار الاصطناعية */
+    #map { height: 260px; width: 100%; border-radius: 12px; border: 1px solid var(--gold); box-shadow: 0 0 15px rgba(212, 175, 55, 0.15); }
 
     .stamps-list { display: flex; flex-direction: column; gap: 14px; }
     .stamp-card { background: var(--card); border: 1px dashed var(--gold); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
@@ -63,7 +61,7 @@
   <header>
     <div class="badge">NFC PASSPORT EDITION</div>
     <h1>سجل الرحالة الذكي</h1>
-    <p class="sub">وثّق أثر خطاك، صورك، والطقس في كل محطة</p>
+    <p class="sub">تتبع حي بالأقمار الاصطناعية لمسارات التيشيرت</p>
   </header>
 
   <div class="action-box">
@@ -101,7 +99,7 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  let map, markers = [];
+  let map, markers = [], routePolyline = null;
   let journeys = JSON.parse(localStorage.getItem('shirt_journeys_v3') || '[]');
   let capturedBase64 = null;
 
@@ -143,12 +141,14 @@
   }
 
   function initMap() {
-    map = L.map('map').setView([24.7136, 46.6753], 5);
-    // خريطة OpenStreetMap المفتوحة والمجانية 100%
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap'
+    map = L.map('map').setView([24.7136, 46.6753], 6);
+    
+    // خريطة تصوير الأقمار الاصطناعية المباشرة عالية الدقة من Esri
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 18,
+      attribution: 'Tiles &copy; Esri &mdash; Earthstar Geographics'
     }).addTo(map);
+
     renderJourneys();
   }
 
@@ -234,11 +234,16 @@
     list.innerHTML = "";
     markers.forEach(m => map.removeLayer(m));
     markers = [];
+    if (routePolyline) {
+      map.removeLayer(routePolyline);
+    }
 
     if (journeys.length === 0) {
       list.innerHTML = `<div class="empty-state">لم يتم توثيق أي محطة بعد.</div>`;
       return;
     }
+
+    const latlngs = [];
 
     journeys.forEach(j => {
       const card = document.createElement('div');
@@ -258,16 +263,29 @@
       list.appendChild(card);
 
       const marker = L.circleMarker([j.lat, j.lng], {
-        color: '#d4af37',
-        fillColor: '#aa820a',
-        fillOpacity: 0.9,
+        color: '#ffffff',
+        weight: 2,
+        fillColor: '#d4af37',
+        fillOpacity: 1,
         radius: 8
       }).addTo(map);
       marker.bindPopup(`<b>${j.city}</b><br>${j.date}<br>${j.weather}`);
       markers.push(marker);
+
+      latlngs.push([j.lat, j.lng]);
     });
 
-    map.setView([journeys[0].lat, journeys[0].lng], 8);
+    // رسم مسار الرحلة الذهبي المتصل بين المدن
+    if (latlngs.length > 1) {
+      routePolyline = L.polyline(latlngs, {
+        color: '#d4af37',
+        weight: 3,
+        dashArray: '6, 8',
+        opacity: 0.9
+      }).addTo(map);
+    }
+
+    map.setView([journeys[0].lat, journeys[0].lng], 11);
   }
 
   window.onload = initMap;
