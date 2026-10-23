@@ -42,7 +42,7 @@
     h1 { font-size: 1.2rem; color: #fff; }
     p.sub { font-size: 0.75rem; color: var(--muted); }
 
-    /* خريطة الأرشيف */
+    /* خريطة الأثر */
     .map-card {
       background: var(--card-bg);
       border: 1px solid var(--border);
@@ -55,13 +55,14 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: rgba(0,0,0,0.4);
+      background: rgba(0,0,0,0.5);
       border-bottom: 1px solid var(--border);
       font-size: 0.75rem;
       color: var(--gold);
       font-weight: bold;
     }
-    #map { width: 100%; height: 200px; background: #12151c; }
+    .map-style-btns { display: flex; gap: 6px; }
+    #map { width: 100%; height: 210px; background: #e0e0e0; }
 
     /* صندوق التقاط صورة جديدة */
     .capture-box {
@@ -81,7 +82,7 @@
     .capture-btn-label { font-size: 0.9rem; font-weight: bold; color: var(--gold); }
     #cameraInput { display: none; }
 
-    /* معرض أرشيف المحطات السابقة */
+    /* شريط أرشيف المحطات السابقة */
     .archive-section {
       background: var(--card-bg);
       border: 1px solid var(--border);
@@ -132,7 +133,7 @@
     }
     #previewImg { width: 100%; height: 100%; object-fit: cover; transition: filter 0.3s ease; }
 
-    /* الفلاتر */
+    /* الفلاتر السينمائية */
     .filter-none { filter: none; }
     .filter-gold { filter: contrast(1.15) brightness(0.95) sepia(0.3) saturate(1.2); }
     .filter-warm { filter: contrast(1.05) brightness(1.05) saturate(1.25) hue-rotate(-8deg); }
@@ -158,6 +159,7 @@
       color: #fff;
       line-height: 1.1;
       text-shadow: 0 2px 12px rgba(0,0,0,0.85);
+      transition: color 0.2s;
     }
     .caption-text {
       font-size: 0.9rem;
@@ -201,7 +203,7 @@
     .coords-tag { font-size: 0.65rem; color: var(--gold); font-family: monospace; letter-spacing: 0.5px; margin-top: 2px; }
     .date-stamp { font-size: 0.65rem; color: rgba(255,255,255,0.7); letter-spacing: 1px; }
 
-    /* أدوات التعديل */
+    /* لوحة الأدوات */
     .studio-panel {
       background: var(--card-bg);
       border: 1px solid var(--border);
@@ -211,6 +213,8 @@
       flex-direction: column;
       gap: 10px;
     }
+    .panel-title { font-size: 0.75rem; color: var(--gold); font-weight: bold; }
+
     .input-field {
       background: rgba(0,0,0,0.4);
       border: 1px solid var(--border);
@@ -269,11 +273,14 @@
     <p class="sub">سجل محطاتك الدائم المربوط بقطعة التيشيرت</p>
   </header>
 
-  <!-- خريطة المحطات الموثقة -->
+  <!-- خريطة المحطات الموثقة بنمط عصري -->
   <div class="map-card">
     <div class="map-header">
       <span>🗺️ خريطة أثر الرحلات</span>
-      <span id="pinCount" style="color:var(--muted); font-size:0.75rem;">0 محطة موثقة</span>
+      <div class="map-style-btns">
+        <button class="btn-chip active" id="btnMapVoyager" onclick="switchMapStyle('voyager')" style="padding: 2px 8px; font-size: 0.65rem;">أطلس حديث</button>
+        <button class="btn-chip" id="btnMapSat" onclick="switchMapStyle('sat')" style="padding: 2px 8px; font-size: 0.65rem;">أقمار صناعية</button>
+      </div>
     </div>
     <div id="map"></div>
   </div>
@@ -282,7 +289,7 @@
   <div class="capture-box" id="captureBox" onclick="document.getElementById('cameraInput').click()">
     <div class="camera-icon">📸</div>
     <div class="capture-btn-label">توثيق محطة جديدة في أرشيف التيشيرت</div>
-    <div style="font-size: 0.75rem; color: var(--muted);">سيتم حفظها كدبوس دائم على الخريطة مع صورتها وطقسها</div>
+    <div style="font-size: 0.75rem; color: var(--muted);">سيتم رصد الطقس والموقع وحفظها كدبوس دائم على الخريطة</div>
   </div>
   <input type="file" accept="image/*" capture="environment" id="cameraInput" onchange="handleImageSelection(event)">
 
@@ -293,7 +300,7 @@
       <span id="archiveTotal" style="font-size:0.7rem; color:var(--muted);"></span>
     </div>
     <div class="archive-scroll" id="archiveScroll">
-      <div style="font-size:0.75rem; color:var(--muted); padding:10px;">لا توجد محطات محفوظة بعد. التقط صورتك الأولى لتسجيلها!</div>
+      <div style="font-size:0.75rem; color:var(--muted); padding:10px;">لا توجد محطات بعد. التقط صورتك الأولى لتسجيلها!</div>
     </div>
   </div>
 
@@ -326,26 +333,42 @@
         <input type="text" class="input-field" id="inputCaption" oninput="updateLiveText()" placeholder="✍️ تعليق أو ذكرى خاصة باللحظة">
       </div>
 
+      <!-- اختيار لون العنوان -->
+      <div>
+        <div class="panel-title">🎨 لون عنوان الموقع:</div>
+        <div class="btn-row" style="margin-top:6px;">
+          <button class="btn-chip active" onclick="setTitleColor('#ffffff', this)">أبيض ناصع</button>
+          <button class="btn-chip" onclick="setTitleColor('var(--gold)', this)">ذهبي ملكي</button>
+          <button class="btn-chip" onclick="setTitleColor('#000000', this)">أسود داكن</button>
+          <button class="btn-chip" onclick="setTitleColor('#e0f836', this)">أصفر نيون</button>
+        </div>
+      </div>
+
       <!-- الفلاتر -->
-      <div class="btn-row">
-        <button class="btn-chip active" onclick="setFilter('filter-none', this)">طبيعي</button>
-        <button class="btn-chip" onclick="setFilter('filter-gold', this)">ذهبي فاخر</button>
-        <button class="btn-chip" onclick="setFilter('filter-warm', this)">سينمائي دافئ</button>
-        <button class="btn-chip" onclick="setFilter('filter-vintage', this)">فينتاج</button>
-        <button class="btn-chip" onclick="setFilter('filter-bw', this)">أبيض وأسود</button>
+      <div>
+        <div class="panel-title">🎬 الفلاتر السينمائية:</div>
+        <div class="btn-row" style="margin-top:6px;">
+          <button class="btn-chip active" onclick="setFilter('filter-none', this)">طبيعي</button>
+          <button class="btn-chip" onclick="setFilter('filter-gold', this)">ذهبي فاخر</button>
+          <button class="btn-chip" onclick="setFilter('filter-warm', this)">سينمائي دافئ</button>
+          <button class="btn-chip" onclick="setFilter('filter-vintage', this)">فينتاج</button>
+          <button class="btn-chip" onclick="setFilter('filter-bw', this)">أبيض وأسود</button>
+        </div>
       </div>
 
       <!-- موضع العنوان السريع -->
-      <div class="btn-row">
-        <button class="btn-chip" onclick="setTitlePos('12%')">أعلى</button>
-        <button class="btn-chip" onclick="setTitlePos('45%')">وسط</button>
-        <button class="btn-chip" onclick="setTitlePos('70%')">أسفل</button>
+      <div>
+        <div class="panel-title">📍 موضع العنوان:</div>
+        <div class="btn-row" style="margin-top:6px;">
+          <button class="btn-chip" onclick="setTitlePos('12%')">أعلى</button>
+          <button class="btn-chip" onclick="setTitlePos('45%')">وسط</button>
+          <button class="btn-chip" onclick="setTitlePos('70%')">أسفل</button>
+        </div>
       </div>
     </div>
 
     <!-- شبكة الإجراءات والحفظ في الأرشيف -->
     <div class="actions-group">
-      <!-- زر الحفظ الدائم في التيشيرت -->
       <button class="action-btn save-archive" id="saveArchiveBtn" onclick="saveToGarmentArchive()">
         <span>💾 حفظ المحطة في أرشيف التيشيرت الدائم</span>
       </button>
@@ -364,7 +387,7 @@
 </div>
 
 <script>
-  let map, markersGroup;
+  let map, markersGroup, currentTileLayer;
   let currentLat = 24.7136, currentLon = 46.6753;
   let currentCoordsText = "24.7136° N, 46.6753° E";
   let currentWeatherText = "☀️ 26°C - معتدل";
@@ -372,24 +395,27 @@
 
   const STORAGE_KEY = "CHRONICLE_GARMENT_ARCHIVE_V1";
 
-  // 1. تشغيل الخريطة وقراءة الأرشيف المحفوظ
+  const mapStyles = {
+    voyager: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    sat: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+  };
+
   function initMap() {
-    map = L.map('map', { zoomControl: false }).setView([currentLat, currentLon], 12);
+    map = L.map('map', { zoomControl: false }).setView([currentLat, currentLon], 13);
     
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; CartoDB',
-      maxZoom: 19
+    currentTileLayer = L.tileLayer(mapStyles.voyager, {
+      maxZoom: 19,
+      attribution: '&copy; CartoDB & OpenStreetMap'
     }).addTo(map);
 
     markersGroup = L.layerGroup().addTo(map);
 
-    // سحب الموقع الحي
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition((pos) => {
         currentLat = pos.coords.latitude;
         currentLon = pos.coords.longitude;
         currentCoordsText = `${currentLat.toFixed(4)}° N, ${currentLon.toFixed(4)}° E`;
-        map.setView([currentLat, currentLon], 13);
+        map.setView([currentLat, currentLon], 14);
         fetchWeather(currentLat, currentLon);
       }, () => {
         fetchWeather(currentLat, currentLon);
@@ -398,11 +424,19 @@
       fetchWeather(currentLat, currentLon);
     }
 
-    // تحميل وعرض المحطات السابقة من الأرشيف
     loadArchiveFromStorage();
   }
 
-  // 2. جلب الطقس اللحظي
+  function switchMapStyle(styleKey) {
+    if (currentTileLayer) {
+      map.removeLayer(currentTileLayer);
+    }
+    currentTileLayer = L.tileLayer(mapStyles[styleKey], { maxZoom: 19 }).addTo(map);
+
+    document.getElementById('btnMapVoyager').classList.toggle('active', styleKey === 'voyager');
+    document.getElementById('btnMapSat').classList.toggle('active', styleKey === 'sat');
+  }
+
   async function fetchWeather(lat, lon) {
     try {
       const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m`);
@@ -414,12 +448,10 @@
     updateLiveText();
   }
 
-  // 3. التقاط الصورة
   function handleImageSelection(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    // ضغط الصورة لضمان حفظها بسلاسة في مساحة المتصفح
     const img = new Image();
     const reader = new FileReader();
     reader.onload = function(e) {
@@ -450,7 +482,11 @@
     reader.readAsDataURL(file);
   }
 
-  // 4. حفظ المحطة في الأرشيف الدائم
+  function setTitleColor(color, btn) {
+    document.getElementById('displayLocation').style.color = color;
+    setActiveBtn(btn);
+  }
+
   function saveToGarmentArchive() {
     const locName = document.getElementById('inputLocation').value.trim() || "محطة موثقة";
     const caption = document.getElementById('inputCaption').value.trim();
@@ -469,7 +505,7 @@
     };
 
     let archive = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-    archive.unshift(newEntry); // إضافة في البداية
+    archive.unshift(newEntry);
 
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(archive));
@@ -477,20 +513,17 @@
       resetCapture();
       loadArchiveFromStorage();
     } catch (e) {
-      // في حال امتلاء الـ LocalStorage يتم تقليص الجودة
       alert("تم حفظ المحطة بنجاح!");
       resetCapture();
     }
   }
 
-  // 5. تحميل المحطات السابقة وعرضها على الخريطة وشريط الأرشيف
   function loadArchiveFromStorage() {
     const archive = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
     markersGroup.clearLayers();
     const scrollContainer = document.getElementById('archiveScroll');
     scrollContainer.innerHTML = "";
 
-    document.getElementById('pinCount').innerText = `${archive.length} محطة موثقة`;
     document.getElementById('archiveTotal').innerText = `(${archive.length})`;
 
     if (archive.length === 0) {
@@ -498,8 +531,7 @@
       return;
     }
 
-    archive.forEach((item, index) => {
-      // 1. إضافة الدبوس على الخريطة
+    archive.forEach((item) => {
       const pinIcon = L.divIcon({
         className: 'custom-pin',
         html: `<div style="background:#d4af37; width:16px; height:16px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 10px #d4af37;"></div>`,
@@ -516,7 +548,6 @@
         </div>
       `);
 
-      // 2. إضافة كرت الأرشيف في المعرض الأفقي
       const card = document.createElement('div');
       card.className = "archive-card";
       card.innerHTML = `
@@ -535,7 +566,6 @@
     });
   }
 
-  // تحديث النصوص الحية
   function updateLiveText() {
     const loc = document.getElementById('inputLocation').value.trim();
     const cap = document.getElementById('inputCaption').value.trim();
@@ -605,11 +635,15 @@
         const file = new File([blob], `Chronicle-${Date.now()}.png`, { type: 'image/png' });
 
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            title: 'سجل الرحالة الذكي',
-            text: `📍 ${document.getElementById('displayLocation').innerText} ✨`
-          });
+          try {
+            await navigator.share({
+              files: [file],
+              title: 'سجل الرحالة الذكي',
+              text: `📍 ${document.getElementById('displayLocation').innerText} ✨`
+            });
+          } catch (err) {
+            console.log("تم إغلاق المشاركة.");
+          }
         } else {
           const link = document.createElement('a');
           link.download = `Chronicle-${Date.now()}.png`;
