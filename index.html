@@ -7,7 +7,7 @@
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -19,7 +19,6 @@
       --card-bg: rgba(18, 22, 31, 0.94);
       --gold: #d4af37;
       --gold-dark: #aa820a;
-      --gold-glow: rgba(212, 175, 55, 0.4);
       --text: #f0f3f8;
       --muted: #8a94a6;
       --border: #222938;
@@ -44,7 +43,7 @@
     h1 { font-size: 1.25rem; color: #fff; }
     p.sub { font-size: 0.75rem; color: var(--muted); }
 
-    /* 3. كرت ملكية القطعة وبصمة الـ NFC الفاخرة */
+    /* كرت ملكية القطعة */
     .ownership-card {
       background: rgba(18, 22, 31, 0.7);
       backdrop-filter: blur(10px);
@@ -58,7 +57,7 @@
       box-shadow: 0 4px 15px rgba(0,0,0,0.4);
     }
     .brand-title { font-size: 0.95rem; font-weight: 900; color: var(--gold); letter-spacing: 0.5px; }
-    .edition-tag { font-size: 0.65rem; color: var(--muted); margin-top: 1px; font-family: monospace; }
+    .edition-tag { font-size: 0.65rem; color: var(--muted); margin-top: 1px; font-family: 'Space Mono', monospace; }
     .nfc-pill {
       display: inline-flex;
       align-items: center;
@@ -72,7 +71,7 @@
       color: var(--gold);
     }
 
-    /* 2. شريط إحصائيات مسار القطعة */
+    /* شريط الإحصائيات */
     .stats-bar {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -88,7 +87,7 @@
     .stat-val { font-size: 1rem; font-weight: 900; color: var(--gold); }
     .stat-lbl { font-size: 0.65rem; color: var(--muted); margin-top: 2px; }
 
-    /* خريطة الأثر */
+    /* الخريطة */
     .map-card {
       background: var(--card-bg);
       border: 1px solid var(--border);
@@ -111,11 +110,7 @@
     #map { width: 100%; height: 215px; background: #1a2233; }
 
     /* أزرار التوثيق المزدوجة */
-    .capture-row {
-      display: flex;
-      gap: 10px;
-      width: 100%;
-    }
+    .capture-row { display: flex; gap: 10px; width: 100%; }
     .capture-box {
       flex: 1;
       background: var(--card-bg);
@@ -136,7 +131,7 @@
     .capture-btn-label { font-size: 0.88rem; font-weight: bold; color: var(--gold); }
     .capture-sub { font-size: 0.68rem; color: var(--muted); }
 
-    /* شريط أرشيف المحطات السابقة */
+    /* الأرشيف */
     .archive-section {
       background: var(--card-bg);
       border: 1px solid var(--border);
@@ -173,7 +168,6 @@
     .archive-loc { font-weight: bold; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .archive-date { color: var(--muted); font-size: 0.6rem; margin-top: 2px; }
 
-    /* 4. زر الحذف الفردي المحمي بالرمز */
     .card-delete-btn {
       position: absolute;
       top: 5px;
@@ -191,15 +185,12 @@
       cursor: pointer;
       z-index: 5;
     }
-    .card-delete-btn:active {
-      transform: scale(0.9);
-      background: #ef4444;
-      color: #fff;
-    }
+    .card-delete-btn:active { transform: scale(0.9); background: #ef4444; color: #fff; }
 
     /* استوديو المعاينة والتعديل */
     #editSection { display: none; flex-direction: column; gap: 12px; }
 
+    /* بطاقة الستوري العادية */
     .story-canvas-box {
       position: relative;
       width: 100%;
@@ -212,6 +203,99 @@
     }
     #previewImg { width: 100%; height: 100%; object-fit: cover; transition: filter 0.3s ease; }
 
+    /* تصميم بطاقة صعود الطائرة الرقمية الفاخرة */
+    .boarding-pass-card {
+      width: 100%;
+      background: #11141c;
+      border: 2px solid var(--gold);
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.9);
+      position: relative;
+      user-select: none;
+    }
+    .bp-header {
+      background: #181d29;
+      border-bottom: 1px solid var(--border);
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .bp-brand { font-size: 0.85rem; font-weight: 900; color: var(--gold); letter-spacing: 1px; }
+    .bp-type { font-size: 0.65rem; color: #fff; font-family: 'Space Mono', monospace; border: 1px solid var(--gold); padding: 1px 6px; border-radius: 10px; }
+    
+    .bp-image-box {
+      width: 100%;
+      height: 230px;
+      overflow: hidden;
+      position: relative;
+      background: #000;
+    }
+    #bpImg { width: 100%; height: 100%; object-fit: cover; }
+
+    .bp-route {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px 8px;
+    }
+    .bp-city { font-size: 1.3rem; font-weight: 900; color: #fff; }
+    .bp-code { font-size: 0.7rem; color: var(--gold); font-family: 'Space Mono', monospace; }
+    .bp-plane-arrow { font-size: 1rem; color: var(--gold); }
+
+    .bp-divider {
+      position: relative;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 4px 0;
+    }
+    .bp-divider::before {
+      content: '';
+      position: absolute;
+      left: 14px; right: 14px;
+      border-top: 2px dashed #30394a;
+    }
+    .bp-notch-left, .bp-notch-right {
+      position: absolute;
+      width: 16px; height: 16px;
+      background: var(--bg);
+      border-radius: 50%;
+      top: 0;
+    }
+    .bp-notch-left { left: -8px; border-right: 2px solid var(--gold); }
+    .bp-notch-right { right: -8px; border-left: 2px solid var(--gold); }
+
+    .bp-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      padding: 6px 16px 10px;
+      text-align: center;
+    }
+    .bp-field-lbl { font-size: 0.58rem; color: var(--muted); text-transform: uppercase; font-family: 'Space Mono', monospace; }
+    .bp-field-val { font-size: 0.78rem; font-weight: bold; color: #fff; margin-top: 2px; }
+
+    .bp-footer {
+      background: #0c0f17;
+      border-top: 1px solid var(--border);
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .bp-barcode-visual {
+      display: flex;
+      gap: 2px;
+      height: 28px;
+      align-items: flex-end;
+    }
+    .bp-bar { background: #fff; height: 100%; }
+
     /* الفلاتر */
     .filter-none { filter: none; }
     .filter-gold { filter: contrast(1.15) brightness(0.95) sepia(0.3) saturate(1.2); }
@@ -219,7 +303,7 @@
     .filter-vintage { filter: grayscale(0.25) contrast(1.18) brightness(0.9) sepia(0.35); }
     .filter-bw { filter: grayscale(1) contrast(1.35) brightness(0.92); }
 
-    /* ملصق العنوان الحر */
+    /* ملصق العنوان الحر للستوري */
     .title-sticker {
       position: absolute;
       top: 15%;
@@ -250,7 +334,6 @@
       text-shadow: 0 2px 8px rgba(0,0,0,0.9);
     }
 
-    /* شريط الطقس والإحداثيات */
     .bottom-telemetry {
       position: absolute;
       bottom: 0;
@@ -333,11 +416,8 @@
       justify-content: center;
       gap: 8px;
     }
-    .action-btn.save-archive {
-      background: linear-gradient(135deg, #10b981, #059669);
-      color: #fff;
-      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
-    }
+    .action-btn.save-archive { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
+    .action-btn.boarding-pass { background: linear-gradient(135deg, #1a2233, #0b0e14); border: 1px solid var(--gold); color: var(--gold); }
     .action-btn.story { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #12151c; }
     .action-btn.whatsapp { background: var(--wa-color); color: #fff; }
     .retake-btn { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 8px; border-radius: 8px; font-size: 0.78rem; cursor: pointer; }
@@ -352,7 +432,7 @@
     <p class="sub">سجل الرحلات الدائم المتصل بقطعة التيشيرت</p>
   </header>
 
-  <!-- 3. كرت ملكية القطعة والبصمة الرقمية الموثقة -->
+  <!-- كرت ملكية القطعة -->
   <div class="ownership-card">
     <div>
       <div class="brand-title">عِزوة • EZWA</div>
@@ -363,7 +443,7 @@
     </div>
   </div>
 
-  <!-- 2. لوحة الإحصائيات الحية لرحلات القطعة -->
+  <!-- لوحة الإحصائيات -->
   <div class="stats-bar">
     <div class="stat-box">
       <div class="stat-val" id="statDestCount">0</div>
@@ -379,7 +459,7 @@
     </div>
   </div>
 
-  <!-- خريطة أثر الرحلات مع المسار المترابط -->
+  <!-- خريطة الأثر -->
   <div class="map-card">
     <div class="map-header">
       <span>🗺️ خريطة أثر الرحلات</span>
@@ -391,7 +471,7 @@
     <div id="map"></div>
   </div>
 
-  <!-- خياران واضحان للتوثيق -->
+  <!-- أزرار التوثيق المزدوجة -->
   <div class="capture-row" id="captureRow">
     <label class="capture-box" for="cameraDirectInput">
       <div class="camera-icon">📸</div>
@@ -422,22 +502,91 @@
   <!-- استوديو التعديل والمشاركة -->
   <div id="editSection">
     
+    <!-- اختيار نوع القالب المعروض -->
+    <div style="display:flex; gap:8px;">
+      <button class="btn-chip active" id="btnViewStory" onclick="toggleViewTemplate('story')" style="flex:1;">📱 قالب الستوري الكامل</button>
+      <button class="btn-chip" id="btnViewBp" onclick="toggleViewTemplate('bp')" style="flex:1;">🎫 قالب تذكرة الصعود (Boarding Pass)</button>
+    </div>
+
+    <!-- 1. قالب الستوري العادي -->
     <div class="story-canvas-box" id="storyCanvasBox">
       <img id="previewImg" class="filter-none" src="" alt="صورة المحطة">
 
-      <!-- ملصق العنوان الحر -->
       <div class="title-sticker" id="draggableTitle">
         <div class="title-text" id="displayLocation">الرياض</div>
         <div class="caption-text" id="displayCaption" style="display:none;"></div>
       </div>
 
-      <!-- شريط الطقس والإحداثيات -->
       <div class="bottom-telemetry">
         <div>
           <div class="weather-pill" id="displayWeather">☀️ --°C</div>
           <div class="coords-tag" id="displayCoords">24.7136° N, 46.6753° E</div>
         </div>
         <div class="date-stamp" id="displayDate">CHRONICLE</div>
+      </div>
+    </div>
+
+    <!-- 2. قالب بطاقة صعود الطائرة (Boarding Pass) -->
+    <div class="boarding-pass-card" id="boardingPassBox" style="display:none;">
+      <div class="bp-header">
+        <div class="bp-brand">✈️ EZWA CHRONICLE AIRWAYS</div>
+        <div class="bp-type">VIP BOARDING PASS</div>
+      </div>
+
+      <div class="bp-image-box">
+        <img id="bpImg" class="filter-none" src="" alt="صورة الرحلة">
+      </div>
+
+      <div class="bp-route">
+        <div>
+          <div class="bp-city" id="bpOriginName">المحطة السابقة</div>
+          <div class="bp-code">ORIGIN</div>
+        </div>
+        <div class="bp-plane-arrow">➔ ✈️ ➔</div>
+        <div style="text-align:left;">
+          <div class="bp-city" id="bpDestName">الرياض</div>
+          <div class="bp-code" id="bpDestCode">DESTINATION</div>
+        </div>
+      </div>
+
+      <div class="bp-divider">
+        <div class="bp-notch-left"></div>
+        <div class="bp-notch-right"></div>
+      </div>
+
+      <div class="bp-grid">
+        <div>
+          <div class="bp-field-lbl">FLIGHT</div>
+          <div class="bp-field-val" style="color:var(--gold);">EZW-2026</div>
+        </div>
+        <div>
+          <div class="bp-field-lbl">SEAT</div>
+          <div class="bp-field-val">01A (OWNER)</div>
+        </div>
+        <div>
+          <div class="bp-field-lbl">DATE</div>
+          <div class="bp-field-val" id="bpDateVal">2026/10</div>
+        </div>
+        <div>
+          <div class="bp-field-lbl">WEATHER</div>
+          <div class="bp-field-val" id="bpWeatherVal">🌤️ 26°C</div>
+        </div>
+        <div>
+          <div class="bp-field-lbl">TIME</div>
+          <div class="bp-field-val" id="bpTimeVal">16:40 AST</div>
+        </div>
+        <div>
+          <div class="bp-field-lbl">STATUS</div>
+          <div class="bp-field-val" style="color:#10b981;">CONFIRMED</div>
+        </div>
+      </div>
+
+      <div class="bp-footer">
+        <div class="bp-barcode-visual" id="bpBarcode">
+          <!-- أعمدة الباركود الزخرفية -->
+          <div class="bp-bar" style="width:3px;"></div><div class="bp-bar" style="width:1px;"></div><div class="bp-bar" style="width:4px;"></div><div class="bp-bar" style="width:2px;"></div><div class="bp-bar" style="width:1px;"></div><div class="bp-bar" style="width:3px;"></div><div class="bp-bar" style="width:5px;"></div><div class="bp-bar" style="width:2px;"></div><div class="bp-bar" style="width:1px;"></div><div class="bp-bar" style="width:4px;"></div><div class="bp-bar" style="width:2px;"></div><div class="bp-bar" style="width:3px;"></div><div class="bp-bar" style="width:1px;"></div><div class="bp-bar" style="width:4px;"></div>
+        </div>
+        <div style="font-size:0.65rem; color:var(--muted); font-family:'Space Mono',monospace;">#EZWA-GARMENT-CHRONICLE</div>
       </div>
     </div>
 
@@ -485,11 +634,16 @@
         <span>☁️ حفظ المحطة سحابياً في أرشيف التيشيرت</span>
       </button>
 
-      <button class="action-btn story" onclick="shareCard('story')">
-        <span>🚀 نشر لستوري سناب شات / إنستغرام</span>
+      <!-- زر تصدير تذكرة الصعود الجديدة -->
+      <button class="action-btn boarding-pass" onclick="exportCardVisual('boardingPass')">
+        <span>🎫 مشاركة بطاقة صعود الطائرة (Boarding Pass)</span>
       </button>
 
-      <button class="action-btn whatsapp" onclick="shareCard('whatsapp')">
+      <button class="action-btn story" onclick="exportCardVisual('story')">
+        <span>🚀 نشر بطاقة الستوري الكاملة</span>
+      </button>
+
+      <button class="action-btn whatsapp" onclick="exportCardVisual('whatsapp')">
         <span>💬 إرسال عبر واتساب</span>
       </button>
     </div>
@@ -560,7 +714,6 @@
 </script>
 
 <script>
-  // 4. رمز المالك السري لحماية حذف الذكريات
   const OWNER_PIN = "1976";
 
   let map, markersGroup, currentTileLayer, routePolyline;
@@ -568,6 +721,7 @@
   let currentCoordsText = "24.7136° N, 46.6753° E";
   let currentWeatherText = "☀️ 26°C - معتدل";
   let capturedBase64 = "";
+  let lastRecordedLocation = "نقطة الانطلاق";
 
   const STORAGE_KEY = "CHRONICLE_GARMENT_ARCHIVE_V1";
 
@@ -644,18 +798,41 @@
         capturedBase64 = canvas.toDataURL('image/jpeg', 0.78);
 
         document.getElementById('previewImg').src = capturedBase64;
+        document.getElementById('bpImg').src = capturedBase64;
+
         document.getElementById('captureRow').style.display = 'none';
         document.getElementById('archiveSection').style.display = 'none';
         document.getElementById('editSection').style.display = 'flex';
 
         const now = new Date();
         document.getElementById('displayDate').innerText = `CHRONICLE • ${now.toLocaleDateString('ar-SA')}`;
+        document.getElementById('bpDateVal').innerText = now.toLocaleDateString('en-GB');
+        document.getElementById('bpTimeVal').innerText = now.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
 
         updateLiveText();
         enableDragTitle();
       };
     };
     reader.readAsDataURL(file);
+  }
+
+  function toggleViewTemplate(type) {
+    const storyBox = document.getElementById('storyCanvasBox');
+    const bpBox = document.getElementById('boardingPassBox');
+    const btnStory = document.getElementById('btnViewStory');
+    const btnBp = document.getElementById('btnViewBp');
+
+    if (type === 'story') {
+      storyBox.style.display = 'block';
+      bpBox.style.display = 'none';
+      btnStory.classList.add('active');
+      btnBp.classList.remove('active');
+    } else {
+      storyBox.style.display = 'none';
+      bpBox.style.display = 'flex';
+      btnStory.classList.remove('active');
+      btnBp.classList.add('active');
+    }
   }
 
   function setTitleColor(color, btn) {
@@ -711,7 +888,6 @@
     }
   }
 
-  // 4. حذف محطة واحدة مع التحقق من رمز المالك 1976
   async function deleteSingleEntry(index, docId) {
     const enteredPin = prompt("🔒 هذه العملية تتطلب تصريح المالك.\nيرجى إدخال الرمز السري للحذف:");
     if (enteredPin === null) return;
@@ -736,11 +912,10 @@
     window.syncCloudArchive();
   }
 
-  // 2. دالة حساب المسافة الجغرافية (Haversine Formula) بالكيلومتر
   function calculateTotalDistance(points) {
     if (points.length < 2) return 0;
     let totalKm = 0;
-    const R = 6371; // نصف قطر الأرض بالكيلومتر
+    const R = 6371;
 
     for (let i = 0; i < points.length - 1; i++) {
       const lat1 = points[i][0] * Math.PI / 180;
@@ -793,14 +968,15 @@
       scrollContainer.innerHTML = `<div style="font-size:0.75rem; color:var(--muted); padding:10px;">لا توجد محطات موثقة حالياً. السجل بانتظار رحلتك القادمة!</div>`;
       document.getElementById('statDistance').innerText = "0 كم";
       document.getElementById('statFirstDate').innerText = "--";
+      lastRecordedLocation = "نقطة الانطلاق";
       return;
     }
 
-    // ترتيب المحطات زمنياً لرسم خط السير من الأقدم إلى الأحدث
+    lastRecordedLocation = archive[0].location || "المحطة السابقة";
+
     const chronologicalItems = [...archive].sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
     const pathCoordinates = chronologicalItems.map(item => [item.lat, item.lon]);
 
-    // 1. رسم خط مسار الرحلة المتصل باللون الذهبي النيون
     if (pathCoordinates.length > 1) {
       routePolyline = L.polyline(pathCoordinates, {
         color: '#d4af37',
@@ -811,7 +987,6 @@
       }).addTo(map);
     }
 
-    // 2. تحديث لوحة الإحصائيات (المسافة + تاريخ أول محطة)
     const totalDist = calculateTotalDistance(pathCoordinates);
     document.getElementById('statDistance').innerText = `${totalDist} كم`;
     document.getElementById('statFirstDate').innerText = chronologicalItems[0].date || "--";
@@ -856,10 +1031,11 @@
   }
 
   function updateLiveText() {
-    const loc = document.getElementById('inputLocation').value.trim();
+    const loc = document.getElementById('inputLocation').value.trim() || "الرياض";
     const cap = document.getElementById('inputCaption').value.trim();
 
-    document.getElementById('displayLocation').innerText = loc || "الرياض";
+    // تحديث بطاقة الستوري
+    document.getElementById('displayLocation').innerText = loc;
     document.getElementById('displayCoords').innerText = currentCoordsText;
     document.getElementById('displayWeather').innerText = currentWeatherText;
 
@@ -870,10 +1046,16 @@
     } else {
       capElem.style.display = 'none';
     }
+
+    // تحديث بطاقة الـ Boarding Pass
+    document.getElementById('bpDestName').innerText = loc;
+    document.getElementById('bpOriginName').innerText = lastRecordedLocation;
+    document.getElementById('bpWeatherVal').innerText = currentWeatherText.split('|')[0] || currentWeatherText;
   }
 
   function setFilter(cls, btn) {
     document.getElementById('previewImg').className = cls;
+    document.getElementById('bpImg').className = cls;
     setActiveBtn(btn);
   }
 
@@ -915,26 +1097,35 @@
     window.addEventListener('touchend', onEnd);
   }
 
-  async function shareCard(targetType) {
-    const exportCard = document.getElementById('storyCanvasBox');
+  // تصدير التصميم المطلوب (ستوري كامل أو بطاقة صعود الطائرة)
+  async function exportCardVisual(mode) {
+    let targetElement = document.getElementById('storyCanvasBox');
+    let prefix = 'Story';
+
+    if (mode === 'boardingPass') {
+      targetElement = document.getElementById('boardingPassBox');
+      targetElement.style.display = 'flex'; // تأكيد ظهوره لعمل الالتقاط
+      prefix = 'BoardingPass';
+    }
+
     try {
-      const canvas = await html2canvas(exportCard, { scale: 2.5, useCORS: true, backgroundColor: "#000" });
+      const canvas = await html2canvas(targetElement, { scale: 2.5, useCORS: true, backgroundColor: "#090a0f" });
       canvas.toBlob(async (blob) => {
         if (!blob) return;
-        const file = new File([blob], `Chronicle-${Date.now()}.png`, { type: 'image/png' });
+        const file = new File([blob], `EZWA-${prefix}-${Date.now()}.png`, { type: 'image/png' });
 
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({
             files: [file],
-            title: 'سجل الرحالة الذكي',
-            text: `📍 ${document.getElementById('displayLocation').innerText} ✨`
+            title: 'بطاقة صعود الرحالة | عِزوة',
+            text: `📍 وجهتي الحالية: ${document.getElementById('inputLocation').value || 'الرياض'} ✈️`
           });
         } else {
           const link = document.createElement('a');
-          link.download = `Chronicle-${Date.now()}.png`;
+          link.download = `EZWA-${prefix}-${Date.now()}.png`;
           link.href = canvas.toDataURL('image/png');
           link.click();
-          alert("تم حفظ بطاقة الستوري في ألبوم الصور!");
+          alert("تم حفظ التصميم في ألبوم الصور بجودة عالية!");
         }
       }, 'image/png');
     } catch (e) {
@@ -946,6 +1137,7 @@
     document.getElementById('cameraDirectInput').value = "";
     document.getElementById('galleryDirectInput').value = "";
     document.getElementById('previewImg').src = "";
+    document.getElementById('bpImg').src = "";
     document.getElementById('editSection').style.display = 'none';
     document.getElementById('captureRow').style.display = 'flex';
     document.getElementById('archiveSection').style.display = 'flex';
