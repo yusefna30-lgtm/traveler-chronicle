@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>أرشيف وسجل الرحالة الذكي</title>
+  <title>أرشيف وسجل الرحالة الذكي | سحابي</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -64,7 +64,7 @@
     .map-style-btns { display: flex; gap: 6px; }
     #map { width: 100%; height: 210px; background: #1a2233; }
 
-    /* صندوق التقاط صورة جديدة */
+    /* صندوق التقاط صورة جديدة محمي للمالك */
     .capture-box {
       background: var(--card-bg);
       border: 2px dashed var(--gold);
@@ -78,7 +78,7 @@
       gap: 6px;
     }
     .capture-box:active { background: rgba(212, 175, 55, 0.08); }
-    .camera-icon { font-size: 2rem; }
+    .camera-icon { font-size: 1.8rem; }
     .capture-btn-label { font-size: 0.9rem; font-weight: bold; color: var(--gold); }
     #cameraInput { display: none; }
 
@@ -268,12 +268,12 @@
 
 <div class="app-container">
   <header>
-    <div class="badge">SMART GARMENT CHRONICLE</div>
+    <div class="badge">EZWA CHRONICLE • CLOUD ARCHIVE</div>
     <h1>أرشيف الرحالة التفاعلي</h1>
-    <p class="sub">سجل محطاتك الدائم المربوط بقطعة التيشيرت</p>
+    <p class="sub">سجل الرحلات الدائم المتصل بقطعة التيشيرت</p>
   </header>
 
-  <!-- خريطة المحطات الموثقة بنمط عصري مجاني 100% بدون قيود -->
+  <!-- خريطة أثر الرحلات التفاعلية -->
   <div class="map-card">
     <div class="map-header">
       <span>🗺️ خريطة أثر الرحلات</span>
@@ -285,22 +285,22 @@
     <div id="map"></div>
   </div>
 
-  <!-- زر توثيق محطة جديدة -->
-  <div class="capture-box" id="captureBox" onclick="document.getElementById('cameraInput').click()">
-    <div class="camera-icon">📸</div>
-    <div class="capture-btn-label">توثيق محطة جديدة في أرشيف التيشيرت</div>
-    <div style="font-size: 0.75rem; color: var(--muted);">سيتم رصد الطقس والموقع وحفظها كدبوس دائم على الخريطة</div>
+  <!-- زر توثيق محطة جديدة (محمي برمز سري 1976 للمالك) -->
+  <div class="capture-box" id="captureBox" onclick="verifyOwnerAccess()">
+    <div class="camera-icon">🔒 📸</div>
+    <div class="capture-btn-label">توثيق محطة جديدة (خاص بالمالك)</div>
+    <div style="font-size: 0.75rem; color: var(--muted);">المعرض والخريطة متاحان لتصفح الجميع</div>
   </div>
   <input type="file" accept="image/*" capture="environment" id="cameraInput" onchange="handleImageSelection(event)">
 
   <!-- معرض المحطات المحفوظة في التيشيرت -->
   <div class="archive-section" id="archiveSection">
     <div class="archive-header">
-      <span>📚 محطاتك المحفوظة للعودة إليها:</span>
+      <span>📚 محطات التيشيرت الموثقة:</span>
       <span id="archiveTotal" style="font-size:0.7rem; color:var(--muted);"></span>
     </div>
     <div class="archive-scroll" id="archiveScroll">
-      <div style="font-size:0.75rem; color:var(--muted); padding:10px;">لا توجد محطات بعد. التقط صورتك الأولى لتسجيلها!</div>
+      <div style="font-size:0.75rem; color:var(--muted); padding:10px;">جاري تحميل المحطات من السحابة...</div>
     </div>
   </div>
 
@@ -370,7 +370,7 @@
     <!-- شبكة الإجراءات والحفظ في الأرشيف -->
     <div class="actions-group">
       <button class="action-btn save-archive" id="saveArchiveBtn" onclick="saveToGarmentArchive()">
-        <span>💾 حفظ المحطة في أرشيف التيشيرت الدائم</span>
+        <span>☁️ حفظ المحطة سحابياً في أرشيف التيشيرت</span>
       </button>
 
       <button class="action-btn story" onclick="shareCard('story')">
@@ -386,7 +386,62 @@
   </div>
 </div>
 
+<!-- Firebase SDK Module -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDPs8F7AqLqb1C4obDxVD6Hj9fa8DUqhi8",
+    authDomain: "ezwa-chronicle.firebaseapp.com",
+    projectId: "ezwa-chronicle",
+    storageBucket: "ezwa-chronicle.firebasestorage.app",
+    messagingSenderId: "116435675976",
+    appId: "1:116435675976:web:711adc1dcd05486d63a17d",
+    measurementId: "G-45W9PWSEH5"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // حفظ المحطة في سحابة Firestore
+  window.saveEntryToFirestore = async function(entryData) {
+    try {
+      const docRef = await addDoc(collection(db, "travel_chronicles"), entryData);
+      return docRef.id;
+    } catch (e) {
+      console.error("Firestore Save Error: ", e);
+      throw e;
+    }
+  };
+
+  // جلب المحطات المخزنة سحابياً
+  window.loadEntriesFromFirestore = async function() {
+    try {
+      const q = query(collection(db, "travel_chronicles"), orderBy("timestamp", "desc"));
+      const querySnapshot = await getDocs(q);
+      const items = [];
+      querySnapshot.forEach((doc) => {
+        items.push({ id: doc.id, ...doc.data() });
+      });
+      return items;
+    } catch (e) {
+      console.error("Firestore Load Error: ", e);
+      return null;
+    }
+  };
+
+  window.addEventListener('load', () => {
+    if (window.syncCloudArchive) {
+      window.syncCloudArchive();
+    }
+  });
+</script>
+
 <script>
+  // الرمز السري الخاص بالمالك
+  const OWNER_PIN = "1976";
+
   let map, markersGroup, currentTileLayer;
   let currentLat = 24.7136, currentLon = 46.6753;
   let currentCoordsText = "24.7136° N, 46.6753° E";
@@ -395,16 +450,26 @@
 
   const STORAGE_KEY = "CHRONICLE_GARMENT_ARCHIVE_V1";
 
-  // مصادر خرائط مجانية 100% مفتوحة وبدون أي مفاتيح API أو علامات مائية
   const mapStyles = {
     sat: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     osm: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png'
   };
 
+  // التحقق من هوية المالك عبر الرمز السري
+  function verifyOwnerAccess() {
+    const inputPin = prompt("🔒 هذه الميزة مخصصة لمالك التيشيرت فقط.\nيرجى إدخال الرمز السري للتوثيق:");
+    if (inputPin === null) return;
+
+    if (inputPin === OWNER_PIN) {
+      document.getElementById('cameraInput').click();
+    } else {
+      alert("⚠️ الرمز غير صحيح. نتمنى لك تصفحاً ممتعاً لأرشيف التيشيرت!");
+    }
+  }
+
   function initMap() {
     map = L.map('map', { zoomControl: false }).setView([currentLat, currentLon], 13);
     
-    // تشغيل الأقمار الصناعية الواقعية فوراً
     currentTileLayer = L.tileLayer(mapStyles.sat, {
       maxZoom: 18,
       attribution: '&copy; Esri & Earthstar Geographics'
@@ -426,7 +491,7 @@
       fetchWeather(currentLat, currentLon);
     }
 
-    loadArchiveFromStorage();
+    loadLocalArchive();
   }
 
   function switchMapStyle(styleKey) {
@@ -460,14 +525,14 @@
       img.src = e.target.result;
       img.onload = function() {
         const canvas = document.createElement('canvas');
-        const maxDim = 1200;
+        const maxDim = 900;
         let w = img.width, h = img.height;
         if (w > h && w > maxDim) { h *= maxDim / w; w = maxDim; }
         else if (h > maxDim) { w *= maxDim / h; h = maxDim; }
         canvas.width = w; canvas.height = h;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, w, h);
-        capturedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+        capturedBase64 = canvas.toDataURL('image/jpeg', 0.78);
 
         document.getElementById('previewImg').src = capturedBase64;
         document.getElementById('captureBox').style.display = 'none';
@@ -489,13 +554,19 @@
     setActiveBtn(btn);
   }
 
-  function saveToGarmentArchive() {
+  // حفظ المحطة سحابياً
+  async function saveToGarmentArchive() {
+    const saveBtn = document.getElementById('saveArchiveBtn');
+    const oldText = saveBtn.innerHTML;
+    saveBtn.innerText = "⏳ جاري الرفع إلى السحابة...";
+    saveBtn.disabled = true;
+
     const locName = document.getElementById('inputLocation').value.trim() || "محطة موثقة";
     const caption = document.getElementById('inputCaption').value.trim();
     const dateStr = new Date().toLocaleDateString('ar-SA');
 
     const newEntry = {
-      id: Date.now(),
+      timestamp: Date.now(),
       lat: currentLat,
       lon: currentLon,
       coords: currentCoordsText,
@@ -506,22 +577,49 @@
       image: capturedBase64
     };
 
-    let archive = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-    archive.unshift(newEntry);
-
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(archive));
-      alert("✅ تم حفظ المحطة بنجاح في أرشيف التيشيرت والخريطة!");
+      if (window.saveEntryToFirestore) {
+        await window.saveEntryToFirestore(newEntry);
+      }
+      let localArchive = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      localArchive.unshift(newEntry);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(localArchive));
+
+      alert("☁️ تم رفع المحطة بنجاح إلى سحابة التيشيرت!");
       resetCapture();
-      loadArchiveFromStorage();
-    } catch (e) {
-      alert("تم حفظ المحطة بنجاح!");
+      window.syncCloudArchive();
+    } catch (err) {
+      console.error(err);
+      alert("⚠️ تم حفظها محلياً وسيتم المزامنة تلقائياً.");
+      let localArchive = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      localArchive.unshift(newEntry);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(localArchive));
       resetCapture();
+      loadLocalArchive();
+    } finally {
+      saveBtn.innerHTML = oldText;
+      saveBtn.disabled = false;
     }
   }
 
-  function loadArchiveFromStorage() {
+  // مزامنة الأرشيف من السحابة
+  window.syncCloudArchive = async function() {
+    if (window.loadEntriesFromFirestore) {
+      const cloudEntries = await window.loadEntriesFromFirestore();
+      if (cloudEntries && cloudEntries.length > 0) {
+        renderArchiveCards(cloudEntries);
+        return;
+      }
+    }
+    loadLocalArchive();
+  };
+
+  function loadLocalArchive() {
     const archive = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    renderArchiveCards(archive);
+  }
+
+  function renderArchiveCards(archive) {
     markersGroup.clearLayers();
     const scrollContainer = document.getElementById('archiveScroll');
     scrollContainer.innerHTML = "";
@@ -529,7 +627,7 @@
     document.getElementById('archiveTotal').innerText = `(${archive.length})`;
 
     if (archive.length === 0) {
-      scrollContainer.innerHTML = `<div style="font-size:0.75rem; color:var(--muted); padding:10px;">لا توجد محطات بعد. التقط صورتك الأولى لتسجيلها!</div>`;
+      scrollContainer.innerHTML = `<div style="font-size:0.75rem; color:var(--muted); padding:10px;">لا توجد محطات بعد. ادخل رمز المالك لتوثيق أول رحلة!</div>`;
       return;
     }
 
@@ -637,15 +735,11 @@
         const file = new File([blob], `Chronicle-${Date.now()}.png`, { type: 'image/png' });
 
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({
-              files: [file],
-              title: 'سجل الرحالة الذكي',
-              text: `📍 ${document.getElementById('displayLocation').innerText} ✨`
-            });
-          } catch (err) {
-            console.log("تم إغلاق المشاركة.");
-          }
+          await navigator.share({
+            files: [file],
+            title: 'سجل الرحالة الذكي',
+            text: `📍 ${document.getElementById('displayLocation').innerText} ✨`
+          });
         } else {
           const link = document.createElement('a');
           link.download = `Chronicle-${Date.now()}.png`;
