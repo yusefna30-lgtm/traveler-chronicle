@@ -3,24 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>استوديو الرحالة والستوري الذكي</title>
+  <title>استوديو الرحالة الذكي | التصميم المينيمال</title>
   
-  <!-- خطوط عربية فاخرة -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,700;1,400&family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@700&family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
   
-  <!-- مكتبة الخرائط Leaflet ومكتبة التصدير html2canvas -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <style>
     :root {
-      --bg: #090b10;
-      --card-bg: rgba(18, 22, 31, 0.92);
+      --bg: #090a0f;
+      --card-bg: rgba(18, 22, 31, 0.94);
       --gold: #d4af37;
-      --gold-dark: #a17f1a;
+      --gold-dark: #aa820a;
       --text: #f0f3f8;
       --muted: #8a94a6;
       --border: #222938;
@@ -44,7 +42,7 @@
     h1 { font-size: 1.2rem; color: #fff; }
     p.sub { font-size: 0.75rem; color: var(--muted); }
 
-    /* خريطة المحطات التفاعلية */
+    /* الخريطة */
     .map-card {
       background: var(--card-bg);
       border: 1px solid var(--border);
@@ -65,12 +63,12 @@
     }
     #map { width: 100%; height: 180px; background: #12151c; }
 
-    /* صندوق التقاط الصورة */
+    /* التقاط الصورة */
     .capture-box {
       background: var(--card-bg);
       border: 2px dashed var(--gold);
       border-radius: 14px;
-      padding: 20px 14px;
+      padding: 22px 14px;
       text-align: center;
       cursor: pointer;
       display: flex;
@@ -79,11 +77,11 @@
       gap: 6px;
     }
     .capture-box:active { background: rgba(212, 175, 55, 0.08); }
-    .camera-icon { font-size: 2rem; }
+    .camera-icon { font-size: 2.2rem; }
     .capture-btn-label { font-size: 0.9rem; font-weight: bold; color: var(--gold); }
     #cameraInput { display: none; }
 
-    /* منطقة استوديو الستوري */
+    /* منطقة الاستوديو */
     #editSection { display: none; flex-direction: column; gap: 12px; }
 
     /* كانفاس الستوري بنسبة 9:16 */
@@ -93,7 +91,6 @@
       aspect-ratio: 9 / 16;
       border-radius: 16px;
       overflow: hidden;
-      border: 1px solid var(--border);
       background: #000;
       box-shadow: 0 10px 35px rgba(0,0,0,0.8);
       user-select: none;
@@ -105,59 +102,93 @@
       transition: filter 0.3s ease;
     }
 
-    /* الفلاتر السينمائية */
+    /* الفلاتر */
     .filter-none { filter: none; }
-    .filter-gold { filter: contrast(1.15) brightness(0.95) sepia(0.35) saturate(1.2); }
-    .filter-warm { filter: contrast(1.05) brightness(1.05) saturate(1.3) hue-rotate(-10deg); }
-    .filter-vintage { filter: grayscale(0.2) contrast(1.2) brightness(0.85) sepia(0.4); }
-    .filter-bw { filter: grayscale(1) contrast(1.4) brightness(0.9); }
+    .filter-gold { filter: contrast(1.15) brightness(0.95) sepia(0.3) saturate(1.2); }
+    .filter-warm { filter: contrast(1.05) brightness(1.05) saturate(1.25) hue-rotate(-8deg); }
+    .filter-vintage { filter: grayscale(0.25) contrast(1.18) brightness(0.9) sepia(0.35); }
+    .filter-bw { filter: grayscale(1) contrast(1.35) brightness(0.92); }
 
-    /* بطاقة العنوان القابلة للسحب والتحريك */
-    .story-overlay {
+    /* 1. ملصق العنوان الحر (مستقل وقابل للسحب بالكامل) */
+    .title-sticker {
       position: absolute;
-      left: 12px;
-      right: 12px;
-      top: 60%; /* الموقع الافتراضي */
-      padding: 14px 16px;
-      border-radius: 12px;
+      top: 15%;
+      right: 18px;
+      max-width: 80%;
       cursor: grab;
       touch-action: none;
+      z-index: 10;
       display: flex;
       flex-direction: column;
       gap: 4px;
-      transition: background 0.2s, backdrop-filter 0.2s;
     }
-    .story-overlay:active { cursor: grabbing; outline: 1px dashed var(--gold); }
-
-    /* أنماط خلفية العنوان */
-    .bg-glass {
-      background: rgba(10, 14, 22, 0.55);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(212, 175, 55, 0.35);
+    .title-sticker:active { cursor: grabbing; outline: 1px dashed rgba(212,175,55,0.7); }
+    
+    .title-text {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.1;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.85), 0 0 4px rgba(0,0,0,0.5);
     }
-    .bg-gradient {
-      background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 100%);
-      border: none;
-      backdrop-filter: none;
-    }
-    .bg-box {
-      background: rgba(0, 0, 0, 0.82);
-      border: 1px solid #333;
-      backdrop-filter: none;
-    }
-    .bg-transparent {
-      background: transparent !important;
-      border: none !important;
-      backdrop-filter: none !important;
+    .caption-text {
+      font-size: 0.9rem;
+      color: #f0f3f8;
+      font-weight: 600;
+      line-height: 1.3;
+      border-right: 3px solid var(--gold);
+      padding-right: 8px;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.9);
     }
 
-    .title-row { display: flex; justify-content: space-between; align-items: baseline; }
-    .story-title { font-size: 1.25rem; font-weight: 900; line-height: 1.2; text-shadow: 0 2px 8px rgba(0,0,0,0.9); }
-    .story-meta { font-size: 0.7rem; font-family: monospace; letter-spacing: 0.5px; opacity: 0.9; text-shadow: 0 1px 4px #000; }
-    .story-weather { font-size: 0.8rem; display: flex; align-items: center; gap: 6px; text-shadow: 0 1px 4px #000; }
-    .story-caption { font-size: 0.85rem; line-height: 1.4; margin-top: 3px; border-right: 3px solid var(--gold); padding-right: 8px; text-shadow: 0 1px 4px #000; }
-    .story-brand { font-size: 0.6rem; letter-spacing: 1px; opacity: 0.7; margin-top: 4px; text-transform: uppercase; text-shadow: 0 1px 4px #000; }
+    /* 2. شريط بيانات المحطة السفلي (مينيمال أنيق وشفاف) */
+    .bottom-telemetry {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      padding: 30px 18px 16px;
+      background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 60%, transparent 100%);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      z-index: 5;
+      color: #fff;
+    }
+    .telemetry-left {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .weather-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #fff;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.15);
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    }
+    .coords-tag {
+      font-size: 0.65rem;
+      color: var(--gold);
+      font-family: monospace;
+      letter-spacing: 0.5px;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+      margin-top: 2px;
+    }
+    .date-stamp {
+      font-size: 0.65rem;
+      color: rgba(255,255,255,0.7);
+      letter-spacing: 1px;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+    }
 
     /* لوحات تحكم الاستوديو */
     .studio-panel {
@@ -176,9 +207,9 @@
       background: rgba(255,255,255,0.06);
       border: 1px solid var(--border);
       color: var(--text);
-      padding: 6px 10px;
+      padding: 6px 12px;
       border-radius: 8px;
-      font-size: 0.72rem;
+      font-size: 0.75rem;
       cursor: pointer;
       white-space: nowrap;
     }
@@ -188,18 +219,15 @@
       background: rgba(0,0,0,0.4);
       border: 1px solid var(--border);
       color: #fff;
-      padding: 8px 10px;
+      padding: 9px 12px;
       border-radius: 8px;
-      font-size: 0.82rem;
+      font-size: 0.85rem;
       width: 100%;
       outline: none;
     }
     .input-field:focus { border-color: var(--gold); }
 
-    .slider-row { display: flex; align-items: center; justify-content: space-between; font-size: 0.75rem; color: var(--muted); }
-    .slider-row input { width: 60%; accent-color: var(--gold); }
-
-    /* أزرار الإجراء والمشاركة */
+    /* أزرار المشاركة */
     .actions-group { display: flex; flex-direction: column; gap: 8px; }
     .action-btn {
       border: none;
@@ -225,10 +253,10 @@
   <header>
     <div class="badge">CHRONICLE STUDIO</div>
     <h1>استوديو الرحالة والستوري الذكي</h1>
-    <p class="sub">خريطة المحطات وتخصيص بطاقة الستوري التفاعلية</p>
+    <p class="sub">توثيق اللحظة بنمط مينيمال سينمائي</p>
   </header>
 
-  <!-- خريطة المحطات التفاعلية الداكنة (ثابتة في الأعلى) -->
+  <!-- خريطة المحطات التفاعلية -->
   <div class="map-card">
     <div class="map-header">
       <span>🗺️ خريطة أثر الرحلات</span>
@@ -240,36 +268,46 @@
   <!-- زر التقاط الصورة -->
   <div class="capture-box" id="captureBox" onclick="document.getElementById('cameraInput').click()">
     <div class="camera-icon">📸</div>
-    <div class="capture-btn-label">التقط صورة المحطة الحالية الآن</div>
-    <div style="font-size: 0.75rem; color: var(--muted);">سيتم رصد الطقس والموقع فوراً وفتح استوديو التعديل</div>
+    <div class="capture-btn-label">التقاط صورة المحطة الآن</div>
+    <div style="font-size: 0.75rem; color: var(--muted);">سيتم رصد الطقس والموقع وفصل العنوان بجمالية تامة</div>
   </div>
   <input type="file" accept="image/*" capture="environment" id="cameraInput" onchange="handleImageSelection(event)">
 
-  <!-- استوديو التعديل والمعاينة المباشرة (يظهر أسفل الخريطة) -->
+  <!-- استوديو المعاينة والتعديل المباشر -->
   <div id="editSection">
     
-    <!-- كانفاس الستوري 9:16 -->
+    <!-- كانفاس الستوري بنسبة 9:16 -->
     <div class="story-canvas-box" id="storyCanvasBox">
-      <img id="previewImg" class="filter-none" src="" alt="المحطة">
+      <img id="previewImg" class="filter-none" src="" alt="صورة المحطة">
 
-      <!-- طبقة العنوان والبيانات القابلة للسحب والتحريك -->
-      <div class="story-overlay bg-glass" id="dragOverlay">
-        <div class="title-row">
-          <div class="story-title" id="displayLocation" style="color:var(--gold);">الرياض</div>
-          <div class="story-meta" id="displayCoords" style="color:var(--gold);">24.7136° N, 46.6753° E</div>
+      <!-- 1. ملصق العنوان الحر (اسحبه لأي مكان) -->
+      <div class="title-sticker" id="draggableTitle">
+        <div class="title-text" id="displayLocation">الرياض</div>
+        <div class="caption-text" id="displayCaption" style="display:none;"></div>
+      </div>
+
+      <!-- 2. شريط بيانات الطقس والإحداثيات (شريط ناعم وسفلي لا يحجب الصورة) -->
+      <div class="bottom-telemetry" id="bottomTelemetry">
+        <div class="telemetry-left">
+          <div class="weather-pill" id="displayWeather">☀️ --°C</div>
+          <div class="coords-tag" id="displayCoords">24.7136° N, 46.6753° E</div>
         </div>
-        <div class="story-weather" id="displayWeather">☀️ --°C</div>
-        <div class="story-caption" id="displayCaption" style="display:none;"></div>
-        <div class="story-brand" id="displayDate">SMART CHRONICLE</div>
+        <div class="date-stamp" id="displayDate">CHRONICLE</div>
       </div>
     </div>
 
-    <!-- أدوات تحكم الاستوديو الفنية -->
+    <!-- لوحة أدوات الاستوديو -->
     <div class="studio-panel">
       
+      <!-- إدخال النصوص -->
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <input type="text" class="input-field" id="inputLocation" oninput="updateLiveText()" placeholder="📍 اسم الوجهة أو المكان (مثال: وادي حنيفة، الدرعية)">
+        <input type="text" class="input-field" id="inputCaption" oninput="updateLiveText()" placeholder="✍️ كلمة أو تعليق قصير">
+      </div>
+
       <!-- الفلاتر السينمائية -->
       <div>
-        <div class="panel-title">🎨 الفلاتر السينمائية للصورة:</div>
+        <div class="panel-title">🎨 الفلاتر السينمائية:</div>
         <div class="btn-row" style="margin-top:6px;">
           <button class="btn-chip active" onclick="setFilter('filter-none', this)">طبيعي</button>
           <button class="btn-chip" onclick="setFilter('filter-gold', this)">ذهبي فاخر</button>
@@ -279,52 +317,29 @@
         </div>
       </div>
 
-      <!-- خلفية العنوان -->
+      <!-- موضع العنوان وسرعة نقله -->
       <div>
-        <div class="panel-title">✨ نمط خلفية العنوان:</div>
+        <div class="panel-title">📍 موضع العنوان (أو اسحبه بإصبعك على الصورة):</div>
         <div class="btn-row" style="margin-top:6px;">
-          <button class="btn-chip active" onclick="setOverlayBg('bg-glass', this)">زجاجي ضبابي</button>
-          <button class="btn-chip" onclick="setOverlayBg('bg-gradient', this)">تدرج سينمائي</button>
-          <button class="btn-chip" onclick="setOverlayBg('bg-box', this)">صندوق داكن</button>
-          <button class="btn-chip" onclick="setOverlayBg('bg-transparent', this)">شفاف بالكامل</button>
+          <button class="btn-chip" onclick="setTitlePos('12%')">أعلى</button>
+          <button class="btn-chip" onclick="setTitlePos('45%')">وسط</button>
+          <button class="btn-chip" onclick="setTitlePos('72%')">أسفل</button>
         </div>
       </div>
 
-      <!-- موضع العنوان السريع -->
+      <!-- لون الخط ونمطه -->
       <div>
-        <div class="panel-title">📍 موضع العنوان (أو اسحبه بإصبعك مباشرة):</div>
+        <div class="panel-title">✒️ مظهر العنوان:</div>
         <div class="btn-row" style="margin-top:6px;">
-          <button class="btn-chip" onclick="setOverlayPos('15%')">الأعلى</button>
-          <button class="btn-chip" onclick="setOverlayPos('45%')">الوسط</button>
-          <button class="btn-chip" onclick="setOverlayPos('70%')">الأسفل</button>
+          <button class="btn-chip active" onclick="setTitleColor('#ffffff', this)">أبيض ناصع</button>
+          <button class="btn-chip" onclick="setTitleColor('var(--gold)', this)">ذهبي ملكي</button>
+          <button class="btn-chip" onclick="toggleBottomData(this)">إخفاء/إظهار الطقس</button>
         </div>
       </div>
 
-      <!-- شفافية الخلفية -->
-      <div class="slider-row">
-        <span>شفافية الخلفية:</span>
-        <input type="range" id="opacitySlider" min="0" max="1" step="0.05" value="0.55" oninput="changeOpacity(this.value)">
-      </div>
-
-      <!-- الخطوط والألوان -->
-      <div>
-        <div class="panel-title">✒️ الخط ولون العنوان:</div>
-        <div class="btn-row" style="margin-top:6px;">
-          <button class="btn-chip active" onclick="setFontFamily('Cairo', this)">خط كايرو</button>
-          <button class="btn-chip" onclick="setFontFamily('Amiri', this)">خط أميري تراثي</button>
-          <button class="btn-chip" onclick="setTitleColor('var(--gold)', this)">ذهبي</button>
-          <button class="btn-chip" onclick="setTitleColor('#ffffff', this)">أبيض ناصع</button>
-        </div>
-      </div>
-
-      <!-- حقول النصوص -->
-      <div style="display:flex; flex-direction:column; gap:6px;">
-        <input type="text" class="input-field" id="inputLocation" oninput="updateLiveText()" placeholder="📍 تعديل اسم المكان (مثال: قصر المصمك، وادي حنيفة)">
-        <input type="text" class="input-field" id="inputCaption" oninput="updateLiveText()" placeholder="✍️ كتابة تعليق أو كلمة تذكارية">
-      </div>
     </div>
 
-    <!-- شبكة أزرار النشر والمشاركة المباشرة -->
+    <!-- أزرار النشر والمشاركة المباشرة -->
     <div class="actions-group">
       <button class="action-btn story" id="shareStoryBtn" onclick="shareCard('story')">
         <span>🚀 نشر لستوري سناب شات / إنستغرام</span>
@@ -345,7 +360,6 @@
   let currentCoordsText = "24.7136° N, 46.6753° E";
   let currentWeatherText = "☀️ 26°C - الرياض";
 
-  // 1. تشغيل الخريطة التفاعلية الداكنة
   function initMap() {
     map = L.map('map', { zoomControl: false }).setView([currentLat, currentLon], 12);
     
@@ -364,7 +378,6 @@
     userMarker = L.marker([currentLat, currentLon], { icon: goldIcon }).addTo(map)
       .bindPopup('<b style="color:#000;">أنت هنا</b>');
 
-    // قراءة الـ GPS
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition((pos) => {
         currentLat = pos.coords.latitude;
@@ -383,7 +396,6 @@
     }
   }
 
-  // 2. قراءة الطقس
   async function fetchWeather(lat, lon) {
     try {
       const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m`);
@@ -395,7 +407,6 @@
     updateLiveText();
   }
 
-  // 3. التقاط الصورة وفتح الاستوديو
   function handleImageSelection(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -407,20 +418,18 @@
       document.getElementById('editSection').style.display = 'flex';
 
       const now = new Date();
-      document.getElementById('displayDate').innerText = `CHRONICLE • ${now.toLocaleDateString('ar-SA')} - ${now.toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'})}`;
+      document.getElementById('displayDate').innerText = `CHRONICLE • ${now.toLocaleDateString('ar-SA')}`;
 
-      // إضافة الدبوس فوق الخريطة
       const locName = document.getElementById('inputLocation').value.trim() || "محطة جديدة";
-      userMarker.bindPopup(`<b style="color:#000;">📍 ${locName}</b><br><small style="color:#555;">تم التقاط صورة المحطة</small>`).openPopup();
+      userMarker.bindPopup(`<b style="color:#000;">📍 ${locName}</b>`).openPopup();
 
       updateLiveText();
-      enableDragOverlay();
-      map.invalidateSize(); // تحديث أبعاد الخريطة
+      enableDragTitle();
+      map.invalidateSize();
     };
     reader.readAsDataURL(file);
   }
 
-  // 4. تحديث النصوص المباشرة
   function updateLiveText() {
     const loc = document.getElementById('inputLocation').value.trim();
     const cap = document.getElementById('inputCaption').value.trim();
@@ -438,41 +447,29 @@
     }
   }
 
-  // 5. تخصيص الفلاتر وخلفيات العنوان
   function setFilter(filterClass, btn) {
-    const img = document.getElementById('previewImg');
-    img.className = filterClass;
+    document.getElementById('previewImg').className = filterClass;
     setActiveBtn(btn);
   }
 
-  function setOverlayBg(bgClass, btn) {
-    const overlay = document.getElementById('dragOverlay');
-    overlay.className = `story-overlay ${bgClass}`;
+  function setTitlePos(topVal) {
+    document.getElementById('draggableTitle').style.top = topVal;
+  }
+
+  function setTitleColor(color, btn) {
+    document.getElementById('displayLocation').style.color = color;
     setActiveBtn(btn);
   }
 
-  function setOverlayPos(topPercentage) {
-    document.getElementById('dragOverlay').style.top = topPercentage;
-  }
-
-  function changeOpacity(val) {
-    const overlay = document.getElementById('dragOverlay');
-    if (overlay.classList.contains('bg-glass')) {
-      overlay.style.backgroundColor = `rgba(10, 14, 22, ${val})`;
-    } else if (overlay.classList.contains('bg-box')) {
-      overlay.style.backgroundColor = `rgba(0, 0, 0, ${val})`;
+  function toggleBottomData(btn) {
+    const bar = document.getElementById('bottomTelemetry');
+    if (bar.style.display === 'none') {
+      bar.style.display = 'flex';
+      btn.style.opacity = '1';
+    } else {
+      bar.style.display = 'none';
+      btn.style.opacity = '0.5';
     }
-  }
-
-  function setFontFamily(fontName, btn) {
-    document.getElementById('dragOverlay').style.fontFamily = `'${fontName}', sans-serif`;
-    setActiveBtn(btn);
-  }
-
-  function setTitleColor(colorHex, btn) {
-    document.getElementById('displayLocation').style.color = colorHex;
-    document.getElementById('displayCoords').style.color = colorHex;
-    setActiveBtn(btn);
   }
 
   function setActiveBtn(activeBtn) {
@@ -481,9 +478,9 @@
     activeBtn.classList.add('active');
   }
 
-  // 6. تفعيل تحريك وسحب العنوان باللمس والماوس (Draggable)
-  function enableDragOverlay() {
-    const overlay = document.getElementById('dragOverlay');
+  // سحب العنوان الحر بالأصبع
+  function enableDragTitle() {
+    const el = document.getElementById('draggableTitle');
     const container = document.getElementById('storyCanvasBox');
     let isDragging = false;
     let startY, initialTop;
@@ -491,7 +488,7 @@
     function onStart(e) {
       isDragging = true;
       startY = e.touches ? e.touches[0].clientY : e.clientY;
-      initialTop = overlay.offsetTop;
+      initialTop = el.offsetTop;
     }
 
     function onMove(e) {
@@ -500,30 +497,28 @@
       const deltaY = clientY - startY;
       let newTop = initialTop + deltaY;
 
-      // حدود التحريك داخل الصورة
-      const maxTop = container.clientHeight - overlay.clientHeight - 10;
+      const maxTop = container.clientHeight - el.clientHeight - 20;
       if (newTop < 10) newTop = 10;
       if (newTop > maxTop) newTop = maxTop;
 
-      overlay.style.top = `${newTop}px`;
+      el.style.top = `${newTop}px`;
     }
 
     function onEnd() { isDragging = false; }
 
-    overlay.addEventListener('mousedown', onStart);
+    el.addEventListener('mousedown', onStart);
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onEnd);
 
-    overlay.addEventListener('touchstart', onStart, { passive: true });
+    el.addEventListener('touchstart', onStart, { passive: true });
     window.addEventListener('touchmove', onMove, { passive: true });
     window.addEventListener('touchend', onEnd);
   }
 
-  // 7. تصدير ومشاركة الستوري لسناب/إنستا/واتساب
   async function shareCard(targetType) {
     const btn = targetType === 'whatsapp' ? document.getElementById('shareWaBtn') : document.getElementById('shareStoryBtn');
     const originalText = btn.innerHTML;
-    btn.innerText = "⏳ جاري إعداد الصورة...";
+    btn.innerText = "⏳ جاري تجهيز الصورة...";
     btn.style.opacity = "0.7";
 
     const exportCard = document.getElementById('storyCanvasBox');
@@ -543,7 +538,7 @@
           return;
         }
 
-        const fileName = `Travel-Story-${Date.now()}.png`;
+        const fileName = `Chronicle-${Date.now()}.png`;
         const file = new File([blob], fileName, { type: 'image/png' });
 
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -554,7 +549,7 @@
               text: `📍 ${document.getElementById('displayLocation').innerText} ✨`
             });
           } catch (err) {
-            console.log("تم إلغاء المشاركة.");
+            console.log("تم إغلاق المشاركة.");
           }
         } else {
           const link = document.createElement('a');
@@ -564,7 +559,7 @@
 
           if (targetType === 'whatsapp') {
             const loc = encodeURIComponent(document.getElementById('displayLocation').innerText);
-            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent('تم حفظ الصورة في ألبومي: ' + loc)}`, '_blank');
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent('تم حفظ صورة المحطة في ألبومي: ' + loc)}`, '_blank');
           } else {
             alert("تم حفظ بطاقة الستوري في ألبوم الصور! يمكنك الآن فتح سناب شات أو إنستغرام ونشرها من الألبوم مباشرة 📸");
           }
