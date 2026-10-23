@@ -23,6 +23,7 @@
       --muted: #8a94a6;
       --border: #222938;
       --wa-color: #25D366;
+      --danger: #ef4444;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
     body {
@@ -108,9 +109,9 @@
       padding: 6px 2px 8px;
     }
     .archive-card {
-      min-width: 110px;
-      max-width: 110px;
-      background: rgba(0,0,0,0.4);
+      min-width: 120px;
+      max-width: 120px;
+      background: rgba(0,0,0,0.5);
       border: 1px solid var(--border);
       border-radius: 10px;
       overflow: hidden;
@@ -118,13 +119,38 @@
       display: flex;
       flex-direction: column;
       flex-shrink: 0;
+      position: relative;
       transition: transform 0.2s, border-color 0.2s;
     }
-    .archive-card:active { transform: scale(0.96); border-color: var(--gold); }
+    .archive-card:active { transform: scale(0.97); border-color: var(--gold); }
     .archive-thumb { width: 100%; height: 110px; object-fit: cover; }
     .archive-info { padding: 6px; font-size: 0.7rem; text-align: right; }
     .archive-loc { font-weight: bold; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .archive-date { color: var(--muted); font-size: 0.6rem; margin-top: 2px; }
+
+    /* زر الحذف الفردي أعلى كل بطاقة */
+    .card-delete-btn {
+      position: absolute;
+      top: 5px;
+      left: 5px;
+      background: rgba(0, 0, 0, 0.75);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      cursor: pointer;
+      z-index: 5;
+    }
+    .card-delete-btn:active {
+      transform: scale(0.9);
+      background: #ef4444;
+      color: #fff;
+    }
 
     /* استوديو المعاينة والتعديل */
     #editSection { display: none; flex-direction: column; gap: 12px; }
@@ -293,9 +319,8 @@
     <div id="map"></div>
   </div>
 
-  <!-- خياران واضحان ومباشران للتوثيق -->
+  <!-- خياران واضحان للتوثيق -->
   <div class="capture-row" id="captureRow">
-    <!-- الزر الأول: التقاط بالكاميرا فوراً -->
     <label class="capture-box" for="cameraDirectInput">
       <div class="camera-icon">📸</div>
       <div class="capture-btn-label">التقاط بالكاميرا</div>
@@ -303,7 +328,6 @@
     </label>
     <input type="file" accept="image/*" capture="environment" id="cameraDirectInput" style="display:none;" onchange="handleImageSelection(event)">
 
-    <!-- الزر الثاني: اختيار صورة من المعرض -->
     <label class="capture-box" for="galleryDirectInput">
       <div class="camera-icon">🖼️</div>
       <div class="capture-btn-label">ألبوم الصور</div>
@@ -405,7 +429,7 @@
 <!-- Firebase SDK Module -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDPs8F7AqLqb1C4obDxVD6Hj9fa8DUqhi8",
@@ -435,13 +459,25 @@
       const q = query(collection(db, "travel_chronicles"), orderBy("timestamp", "desc"));
       const querySnapshot = await getDocs(q);
       const items = [];
-      querySnapshot.forEach((doc) => {
-        items.push({ id: doc.id, ...doc.data() });
+      querySnapshot.forEach((d) => {
+        items.push({ id: d.id, ...d.data() });
       });
       return items;
     } catch (e) {
       console.error("Firestore Load Error: ", e);
       return null;
+    }
+  };
+
+  // حذف مستند واحد محدد من السحابة بواسطة المعرف (docId)
+  window.deleteSingleCloudEntry = async function(docId) {
+    if (!docId) return false;
+    try {
+      await deleteDoc(doc(db, "travel_chronicles", docId));
+      return true;
+    } catch (e) {
+      console.error("Error deleting document from Cloud: ", e);
+      return false;
     }
   };
 
@@ -577,7 +613,8 @@
 
     try {
       if (window.saveEntryToFirestore) {
-        await window.saveEntryToFirestore(newEntry);
+        const cloudId = await window.saveEntryToFirestore(newEntry);
+        newEntry.id = cloudId;
       }
       let localArchive = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
       localArchive.unshift(newEntry);
@@ -600,10 +637,30 @@
     }
   }
 
+  // حذف محطة واحدة مختارة فقط
+  async function deleteSingleEntry(index, docId) {
+    if (!confirm("هل أنت متأكد من رغبتك في حذف هذه المحطة بالتحديد؟")) return;
+
+    // حذف من الذاكرة المحلية
+    let localArchive = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    localArchive.splice(index, 1);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(localArchive));
+
+    // حذف من السحابة إذا وُجد المعرف
+    if (docId && window.deleteSingleCloudEntry) {
+      await window.deleteSingleCloudEntry(docId);
+    }
+
+    renderArchiveCards(localArchive);
+    alert("تم حذف المحطة بنجاح!");
+    window.syncCloudArchive();
+  }
+
   window.syncCloudArchive = async function() {
     if (window.loadEntriesFromFirestore) {
       const cloudEntries = await window.loadEntriesFromFirestore();
       if (cloudEntries && cloudEntries.length > 0) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudEntries));
         renderArchiveCards(cloudEntries);
         return;
       }
@@ -624,11 +681,11 @@
     document.getElementById('archiveTotal').innerText = `(${archive.length})`;
 
     if (archive.length === 0) {
-      scrollContainer.innerHTML = `<div style="font-size:0.75rem; color:var(--muted); padding:10px;">لا توجد محطات بعد. اختر الكاميرا أو الألبوم لتوثيق أول رحلة!</div>`;
+      scrollContainer.innerHTML = `<div style="font-size:0.75rem; color:var(--muted); padding:10px;">لا توجد محطات موثقة حالياً.</div>`;
       return;
     }
 
-    archive.forEach((item) => {
+    archive.forEach((item, index) => {
       const pinIcon = L.divIcon({
         className: 'custom-pin',
         html: `<div style="background:#d4af37; width:16px; height:16px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 10px #d4af37;"></div>`,
@@ -642,12 +699,16 @@
           <img src="${item.image}" style="width:100%; height:90px; object-fit:cover; border-radius:6px; margin-bottom:4px;">
           <b style="font-size:0.85rem;">📍 ${item.location}</b><br>
           <small style="color:#666;">${item.date} • ${item.weather}</small>
+          <div style="margin-top:6px; text-align:center;">
+            <button onclick="deleteSingleEntry(${index}, '${item.id || ''}')" style="background:#ef4444; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:0.7rem; cursor:pointer;">🗑️ حذف هذه المحطة</button>
+          </div>
         </div>
       `);
 
       const card = document.createElement('div');
       card.className = "archive-card";
       card.innerHTML = `
+        <button class="card-delete-btn" title="حذف هذه المحطة" onclick="event.stopPropagation(); deleteSingleEntry(${index}, '${item.id || ''}')">✕</button>
         <img class="archive-thumb" src="${item.image}" alt="${item.location}">
         <div class="archive-info">
           <div class="archive-loc">📍 ${item.location}</div>
