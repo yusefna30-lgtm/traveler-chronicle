@@ -82,6 +82,54 @@
     .capture-btn-label { font-size: 0.9rem; font-weight: bold; color: var(--gold); }
     #cameraInput { display: none; }
 
+    /* نافذة إدخال الرمز السري */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      padding: 20px;
+    }
+    .modal-card {
+      background: #161b26;
+      border: 1px solid var(--gold);
+      border-radius: 16px;
+      padding: 22px;
+      width: 100%;
+      max-width: 320px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    }
+    .pin-input {
+      background: #090a0f;
+      border: 1px solid var(--border);
+      color: #fff;
+      font-size: 1.4rem;
+      text-align: center;
+      padding: 10px;
+      border-radius: 10px;
+      letter-spacing: 6px;
+      outline: none;
+    }
+    .pin-input:focus { border-color: var(--gold); }
+    .modal-actions { display: flex; gap: 8px; }
+    .modal-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+    }
+    .modal-btn.confirm { background: var(--gold); color: #000; }
+    .modal-btn.cancel { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+
     /* شريط أرشيف المحطات السابقة */
     .archive-section {
       background: var(--card-bg);
@@ -285,13 +333,29 @@
     <div id="map"></div>
   </div>
 
-  <!-- زر توثيق محطة جديدة (محمي برمز سري 1976 للمالك) -->
-  <div class="capture-box" id="captureBox" onclick="verifyOwnerAccess()">
+  <!-- زر توثيق محطة جديدة -->
+  <div class="capture-box" id="captureBox" onclick="openPinModal()">
     <div class="camera-icon">🔒 📸</div>
     <div class="capture-btn-label">توثيق محطة جديدة (خاص بالمالك)</div>
     <div style="font-size: 0.75rem; color: var(--muted);">المعرض والخريطة متاحان لتصفح الجميع</div>
   </div>
-  <input type="file" accept="image/*" capture="environment" id="cameraInput" onchange="handleImageSelection(event)">
+  
+  <!-- إدخال الكاميرا (يقبل الكاميرا وألبوم الصور) -->
+  <input type="file" accept="image/*" id="cameraInput" onchange="handleImageSelection(event)">
+
+  <!-- نافذة إدخال الرمز السري المنبثقة المباشرة -->
+  <div class="modal-overlay" id="pinModal">
+    <div class="modal-card">
+      <div style="font-size: 1.5rem;">🔐</div>
+      <div style="font-size: 0.95rem; font-weight: bold; color: var(--gold);">التحقق من مالك التيشيرت</div>
+      <p style="font-size: 0.75rem; color: var(--muted);">أدخل الرمز السري لفتح الكاميرا والتوثيق</p>
+      <input type="password" inputmode="numeric" id="pinInputBox" class="pin-input" maxlength="4" placeholder="••••">
+      <div class="modal-actions">
+        <button class="modal-btn confirm" onclick="submitPin()">تأكيد وفتح 📸</button>
+        <button class="modal-btn cancel" onclick="closePinModal()">إلغاء</button>
+      </div>
+    </div>
+  </div>
 
   <!-- معرض المحطات المحفوظة في التيشيرت -->
   <div class="archive-section" id="archiveSection">
@@ -404,7 +468,6 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  // حفظ المحطة في سحابة Firestore
   window.saveEntryToFirestore = async function(entryData) {
     try {
       const docRef = await addDoc(collection(db, "travel_chronicles"), entryData);
@@ -415,7 +478,6 @@
     }
   };
 
-  // جلب المحطات المخزنة سحابياً
   window.loadEntriesFromFirestore = async function() {
     try {
       const q = query(collection(db, "travel_chronicles"), orderBy("timestamp", "desc"));
@@ -439,7 +501,6 @@
 </script>
 
 <script>
-  // الرمز السري الخاص بالمالك
   const OWNER_PIN = "1976";
 
   let map, markersGroup, currentTileLayer;
@@ -455,17 +516,38 @@
     osm: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png'
   };
 
-  // التحقق من هوية المالك عبر الرمز السري
-  function verifyOwnerAccess() {
-    const inputPin = prompt("🔒 هذه الميزة مخصصة لمالك التيشيرت فقط.\nيرجى إدخال الرمز السري للتوثيق:");
-    if (inputPin === null) return;
+  // وظائف نافذة التحقق من الرمز
+  function openPinModal() {
+    document.getElementById('pinInputBox').value = '';
+    document.getElementById('pinModal').style.display = 'flex';
+    setTimeout(() => document.getElementById('pinInputBox').focus(), 100);
+  }
 
-    if (inputPin === OWNER_PIN) {
+  function closePinModal() {
+    document.getElementById('pinModal').style.display = 'none';
+  }
+
+  function submitPin() {
+    const val = document.getElementById('pinInputBox').value.trim();
+    if (val === OWNER_PIN) {
+      closePinModal();
+      // تشغيل الكاميرا مباشرة بناءً على نقرة الزر المؤكدة
       document.getElementById('cameraInput').click();
     } else {
       alert("⚠️ الرمز غير صحيح. نتمنى لك تصفحاً ممتعاً لأرشيف التيشيرت!");
+      closePinModal();
     }
   }
+
+  // دعم ضغط زر Enter في خانة الرمز
+  document.addEventListener('DOMContentLoaded', () => {
+    const pinBox = document.getElementById('pinInputBox');
+    if (pinBox) {
+      pinBox.addEventListener('keyup', (e) => {
+        if (e.key === 'Enter') submitPin();
+      });
+    }
+  });
 
   function initMap() {
     map = L.map('map', { zoomControl: false }).setView([currentLat, currentLon], 13);
@@ -554,7 +636,6 @@
     setActiveBtn(btn);
   }
 
-  // حفظ المحطة سحابياً
   async function saveToGarmentArchive() {
     const saveBtn = document.getElementById('saveArchiveBtn');
     const oldText = saveBtn.innerHTML;
@@ -602,7 +683,6 @@
     }
   }
 
-  // مزامنة الأرشيف من السحابة
   window.syncCloudArchive = async function() {
     if (window.loadEntriesFromFirestore) {
       const cloudEntries = await window.loadEntriesFromFirestore();
