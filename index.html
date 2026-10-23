@@ -62,7 +62,7 @@
       font-weight: bold;
     }
     .map-style-btns { display: flex; gap: 6px; }
-    #map { width: 100%; height: 210px; background: #e0e0e0; }
+    #map { width: 100%; height: 210px; background: #1a2233; }
 
     /* صندوق التقاط صورة جديدة */
     .capture-box {
@@ -273,13 +273,13 @@
     <p class="sub">سجل محطاتك الدائم المربوط بقطعة التيشيرت</p>
   </header>
 
-  <!-- خريطة المحطات الموثقة بنمط عصري -->
+  <!-- خريطة المحطات الموثقة بنمط عصري مجاني 100% بدون قيود -->
   <div class="map-card">
     <div class="map-header">
       <span>🗺️ خريطة أثر الرحلات</span>
       <div class="map-style-btns">
-        <button class="btn-chip active" id="btnMapVoyager" onclick="switchMapStyle('voyager')" style="padding: 2px 8px; font-size: 0.65rem;">أطلس حديث</button>
-        <button class="btn-chip" id="btnMapSat" onclick="switchMapStyle('sat')" style="padding: 2px 8px; font-size: 0.65rem;">أقمار صناعية</button>
+        <button class="btn-chip active" id="btnMapSat" onclick="switchMapStyle('sat')" style="padding: 2px 8px; font-size: 0.65rem;">أقمار صناعية 🛰️</button>
+        <button class="btn-chip" id="btnMapOsm" onclick="switchMapStyle('osm')" style="padding: 2px 8px; font-size: 0.65rem;">شوارع وأطلس 🗺️</button>
       </div>
     </div>
     <div id="map"></div>
@@ -395,17 +395,19 @@
 
   const STORAGE_KEY = "CHRONICLE_GARMENT_ARCHIVE_V1";
 
+  // مصادر خرائط مجانية 100% مفتوحة وبدون أي مفاتيح API أو علامات مائية
   const mapStyles = {
-    voyager: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-    sat: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+    sat: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    osm: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png'
   };
 
   function initMap() {
     map = L.map('map', { zoomControl: false }).setView([currentLat, currentLon], 13);
     
-    currentTileLayer = L.tileLayer(mapStyles.voyager, {
-      maxZoom: 19,
-      attribution: '&copy; CartoDB & OpenStreetMap'
+    // تشغيل الأقمار الصناعية الواقعية فوراً
+    currentTileLayer = L.tileLayer(mapStyles.sat, {
+      maxZoom: 18,
+      attribution: '&copy; Esri & Earthstar Geographics'
     }).addTo(map);
 
     markersGroup = L.layerGroup().addTo(map);
@@ -431,10 +433,10 @@
     if (currentTileLayer) {
       map.removeLayer(currentTileLayer);
     }
-    currentTileLayer = L.tileLayer(mapStyles[styleKey], { maxZoom: 19 }).addTo(map);
+    currentTileLayer = L.tileLayer(mapStyles[styleKey], { maxZoom: 18 }).addTo(map);
 
-    document.getElementById('btnMapVoyager').classList.toggle('active', styleKey === 'voyager');
     document.getElementById('btnMapSat').classList.toggle('active', styleKey === 'sat');
+    document.getElementById('btnMapOsm').classList.toggle('active', styleKey === 'osm');
   }
 
   async function fetchWeather(lat, lon) {
