@@ -64,7 +64,7 @@
     .map-style-btns { display: flex; gap: 6px; }
     #map { width: 100%; height: 210px; background: #1a2233; }
 
-    /* صندوق التقاط صورة جديدة محمي للمالك */
+    /* صندوق الكاميرا المباشر */
     .capture-box {
       background: var(--card-bg);
       border: 2px dashed var(--gold);
@@ -76,59 +76,13 @@
       flex-direction: column;
       align-items: center;
       gap: 6px;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
     .capture-box:active { background: rgba(212, 175, 55, 0.08); }
     .camera-icon { font-size: 1.8rem; }
     .capture-btn-label { font-size: 0.9rem; font-weight: bold; color: var(--gold); }
     #cameraInput { display: none; }
-
-    /* نافذة إدخال الرمز السري */
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-      padding: 20px;
-    }
-    .modal-card {
-      background: #161b26;
-      border: 1px solid var(--gold);
-      border-radius: 16px;
-      padding: 22px;
-      width: 100%;
-      max-width: 320px;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-    }
-    .pin-input {
-      background: #090a0f;
-      border: 1px solid var(--border);
-      color: #fff;
-      font-size: 1.4rem;
-      text-align: center;
-      padding: 10px;
-      border-radius: 10px;
-      letter-spacing: 6px;
-      outline: none;
-    }
-    .pin-input:focus { border-color: var(--gold); }
-    .modal-actions { display: flex; gap: 8px; }
-    .modal-btn {
-      flex: 1;
-      padding: 10px;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      border: none;
-    }
-    .modal-btn.confirm { background: var(--gold); color: #000; }
-    .modal-btn.cancel { background: transparent; border: 1px solid var(--border); color: var(--muted); }
 
     /* شريط أرشيف المحطات السابقة */
     .archive-section {
@@ -333,29 +287,13 @@
     <div id="map"></div>
   </div>
 
-  <!-- زر توثيق محطة جديدة -->
-  <div class="capture-box" id="captureBox" onclick="openPinModal()">
-    <div class="camera-icon">🔒 📸</div>
-    <div class="capture-btn-label">توثيق محطة جديدة (خاص بالمالك)</div>
-    <div style="font-size: 0.75rem; color: var(--muted);">المعرض والخريطة متاحان لتصفح الجميع</div>
-  </div>
-  
-  <!-- إدخال الكاميرا (يقبل الكاميرا وألبوم الصور) -->
+  <!-- زر توثيق محطة جديدة (يفتح الكاميرا فوراً بنقرة أصلية ومباشرة) -->
+  <label class="capture-box" id="captureBox" for="cameraInput">
+    <div class="camera-icon">📸</div>
+    <div class="capture-btn-label">توثيق محطة جديدة</div>
+    <div style="font-size: 0.75rem; color: var(--muted);">التقط صورة لتوثيق محطتك الحالية مع الطقس والموقع</div>
+  </label>
   <input type="file" accept="image/*" id="cameraInput" onchange="handleImageSelection(event)">
-
-  <!-- نافذة إدخال الرمز السري المنبثقة المباشرة -->
-  <div class="modal-overlay" id="pinModal">
-    <div class="modal-card">
-      <div style="font-size: 1.5rem;">🔐</div>
-      <div style="font-size: 0.95rem; font-weight: bold; color: var(--gold);">التحقق من مالك التيشيرت</div>
-      <p style="font-size: 0.75rem; color: var(--muted);">أدخل الرمز السري لفتح الكاميرا والتوثيق</p>
-      <input type="password" inputmode="numeric" id="pinInputBox" class="pin-input" maxlength="4" placeholder="••••">
-      <div class="modal-actions">
-        <button class="modal-btn confirm" onclick="submitPin()">تأكيد وفتح 📸</button>
-        <button class="modal-btn cancel" onclick="closePinModal()">إلغاء</button>
-      </div>
-    </div>
-  </div>
 
   <!-- معرض المحطات المحفوظة في التيشيرت -->
   <div class="archive-section" id="archiveSection">
@@ -501,8 +439,6 @@
 </script>
 
 <script>
-  const OWNER_PIN = "1976";
-
   let map, markersGroup, currentTileLayer;
   let currentLat = 24.7136, currentLon = 46.6753;
   let currentCoordsText = "24.7136° N, 46.6753° E";
@@ -515,39 +451,6 @@
     sat: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     osm: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png'
   };
-
-  // وظائف نافذة التحقق من الرمز
-  function openPinModal() {
-    document.getElementById('pinInputBox').value = '';
-    document.getElementById('pinModal').style.display = 'flex';
-    setTimeout(() => document.getElementById('pinInputBox').focus(), 100);
-  }
-
-  function closePinModal() {
-    document.getElementById('pinModal').style.display = 'none';
-  }
-
-  function submitPin() {
-    const val = document.getElementById('pinInputBox').value.trim();
-    if (val === OWNER_PIN) {
-      closePinModal();
-      // تشغيل الكاميرا مباشرة بناءً على نقرة الزر المؤكدة
-      document.getElementById('cameraInput').click();
-    } else {
-      alert("⚠️ الرمز غير صحيح. نتمنى لك تصفحاً ممتعاً لأرشيف التيشيرت!");
-      closePinModal();
-    }
-  }
-
-  // دعم ضغط زر Enter في خانة الرمز
-  document.addEventListener('DOMContentLoaded', () => {
-    const pinBox = document.getElementById('pinInputBox');
-    if (pinBox) {
-      pinBox.addEventListener('keyup', (e) => {
-        if (e.key === 'Enter') submitPin();
-      });
-    }
-  });
 
   function initMap() {
     map = L.map('map', { zoomControl: false }).setView([currentLat, currentLon], 13);
@@ -707,7 +610,7 @@
     document.getElementById('archiveTotal').innerText = `(${archive.length})`;
 
     if (archive.length === 0) {
-      scrollContainer.innerHTML = `<div style="font-size:0.75rem; color:var(--muted); padding:10px;">لا توجد محطات بعد. ادخل رمز المالك لتوثيق أول رحلة!</div>`;
+      scrollContainer.innerHTML = `<div style="font-size:0.75rem; color:var(--muted); padding:10px;">لا توجد محطات بعد. اضغط على الكاميرا لتوثيق أول رحلة!</div>`;
       return;
     }
 
