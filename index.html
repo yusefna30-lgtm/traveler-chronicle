@@ -3,9 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>توثيق الرحلة والستوري الذكي</title>
+  <title>سجل الرحالة الذكي | الخريطة والستوري</title>
+  
+  <!-- مكتبة الخرائط التفاعلية Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
   <!-- مكتبة تحويل العناصر إلى صور بدقة عالية -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
   <style>
     :root {
       --bg: #0b0d12;
@@ -21,40 +27,61 @@
     body {
       background-color: var(--bg);
       color: var(--text);
-      padding: 16px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
       align-items: center;
       min-height: 100vh;
       background-image: radial-gradient(circle at 50% 0%, #1a2233 0%, var(--bg) 80%);
     }
-    .app-container { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 16px; }
+    .app-container { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 14px; }
 
-    header { text-align: center; padding: 6px 0 12px; border-bottom: 1px solid var(--border); }
-    .badge { display: inline-block; padding: 3px 12px; border: 1px solid var(--gold); border-radius: 20px; color: var(--gold); font-size: 0.7rem; font-weight: bold; letter-spacing: 1.5px; margin-bottom: 6px; }
+    header { text-align: center; padding: 6px 0 10px; border-bottom: 1px solid var(--border); }
+    .badge { display: inline-block; padding: 3px 12px; border: 1px solid var(--gold); border-radius: 20px; color: var(--gold); font-size: 0.7rem; font-weight: bold; letter-spacing: 1.5px; margin-bottom: 4px; }
     h1 { font-size: 1.25rem; color: #fff; }
-    p.sub { font-size: 0.8rem; color: var(--muted); margin-top: 3px; }
+    p.sub { font-size: 0.8rem; color: var(--muted); }
 
-    /* منطقة التقاط الصورة */
+    /* حاوية الخريطة */
+    .map-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+    .map-header {
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(0,0,0,0.3);
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8rem;
+      color: var(--gold);
+      font-weight: bold;
+    }
+    #map { width: 100%; height: 210px; background: #12151c; }
+
+    /* صندوق التقاط الصورة */
     .capture-box {
       background: var(--card-bg);
       border: 2px dashed var(--gold);
       border-radius: 16px;
-      padding: 36px 16px;
+      padding: 24px 16px;
       text-align: center;
       cursor: pointer;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
     .capture-box:active { background: rgba(212, 175, 55, 0.08); }
-    .camera-icon { font-size: 2.6rem; }
+    .camera-icon { font-size: 2.2rem; }
     .capture-btn-label { font-size: 0.95rem; font-weight: bold; color: var(--gold); }
     #cameraInput { display: none; }
 
     /* منطقة التعديل والمعاينة */
-    #editSection { display: none; flex-direction: column; gap: 14px; }
+    #editSection { display: none; flex-direction: column; gap: 12px; }
 
     .preview-wrapper {
       position: relative;
@@ -68,27 +95,27 @@
     }
     #previewImg { width: 100%; height: 100%; object-fit: cover; }
 
-    /* شريط البيانات المدمج أسفل الصورة للستوري */
+    /* شريط البيانات المدمج للستوري */
     .overlay-card {
       position: absolute;
       bottom: 0;
       left: 0;
       width: 100%;
       background: linear-gradient(to top, rgba(9, 10, 15, 0.95) 0%, rgba(9, 10, 15, 0.75) 70%, transparent 100%);
-      padding: 40px 18px 22px;
+      padding: 36px 16px 20px;
       color: #fff;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 5px;
       text-shadow: 0 2px 4px rgba(0,0,0,0.8);
     }
-    .overlay-title { font-size: 1.3rem; font-weight: bold; color: #fff; }
+    .overlay-title { font-size: 1.25rem; font-weight: bold; color: #fff; }
     .overlay-meta { font-size: 0.75rem; color: var(--gold); font-family: monospace; letter-spacing: 0.5px; }
     .overlay-weather { font-size: 0.85rem; color: #e1e4e8; display: flex; align-items: center; gap: 6px; }
-    .overlay-caption { font-size: 0.9rem; color: #f0f2f5; margin-top: 4px; line-height: 1.4; border-right: 3px solid var(--gold); padding-right: 8px; }
-    .overlay-brand { font-size: 0.65rem; color: var(--muted); margin-top: 8px; letter-spacing: 1.5px; text-transform: uppercase; }
+    .overlay-caption { font-size: 0.88rem; color: #f0f2f5; margin-top: 4px; line-height: 1.4; border-right: 3px solid var(--gold); padding-right: 8px; }
+    .overlay-brand { font-size: 0.65rem; color: var(--muted); margin-top: 6px; letter-spacing: 1.5px; text-transform: uppercase; }
 
-    /* لوحة التعديل والخيارات */
+    /* أدوات التعديل */
     .controls-card {
       background: var(--card-bg);
       border: 1px solid var(--border);
@@ -96,30 +123,29 @@
       padding: 14px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
-    .input-group { display: flex; flex-direction: column; gap: 6px; text-align: right; }
+    .input-group { display: flex; flex-direction: column; gap: 5px; text-align: right; }
     .input-group label { font-size: 0.75rem; color: var(--muted); }
     .input-field {
       background: rgba(0,0,0,0.4);
       border: 1px solid var(--border);
       color: #fff;
-      padding: 10px 12px;
+      padding: 9px 12px;
       border-radius: 8px;
       font-size: 0.85rem;
       outline: none;
     }
     .input-field:focus { border-color: var(--gold); }
-
     .toggle-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; }
 
     /* شبكة أزرار المشاركة */
-    .actions-group { display: flex; flex-direction: column; gap: 10px; }
+    .actions-group { display: flex; flex-direction: column; gap: 8px; }
     .action-btn {
       border: none;
-      padding: 14px;
+      padding: 13px;
       border-radius: 10px;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       font-weight: bold;
       cursor: pointer;
       display: flex;
@@ -154,23 +180,32 @@
 
 <div class="app-container">
   <header>
-    <div class="badge">SMART CHRONICLE</div>
-    <h1>توثيق بطاقة الرحلة واللحظة</h1>
-    <p class="sub">صوّر، عدّل بياناتك، وشاركها مباشرة</p>
+    <div class="badge">TRAVELER CHRONICLE</div>
+    <h1>سجل الرحالة والستوري الذكي</h1>
+    <p class="sub">خريطة المحطات وتوثيق اللحظات بلمسة التيشيرت</p>
   </header>
 
-  <!-- صندوق التقاط الصورة المباشر -->
+  <!-- خريطة المحطات التفاعلية -->
+  <div class="map-card">
+    <div class="map-header">
+      <span>🗺️ خريطة أثر الرحلات</span>
+      <span id="pinCount" style="color:var(--muted); font-size:0.75rem;">محطة نشطة</span>
+    </div>
+    <div id="map"></div>
+  </div>
+
+  <!-- زر التقاط صورة المحطة -->
   <div class="capture-box" id="captureBox" onclick="document.getElementById('cameraInput').click()">
     <div class="camera-icon">📸</div>
-    <div class="capture-btn-label">اضغط هنا لفتح الكاميرا والتقاط الصورة</div>
-    <div style="font-size: 0.75rem; color: var(--muted);">سيتم التعرف على الموقع والطقس تلقائياً</div>
+    <div class="capture-btn-label">التقاط وتوثيق محطة جديدة الآن</div>
+    <div style="font-size: 0.75rem; color: var(--muted);">سيتم رصد الطقس والموقع وتثبيت الدبوس على الخريطة</div>
   </div>
   <input type="file" accept="image/*" capture="environment" id="cameraInput" onchange="handleImageSelection(event)">
 
-  <!-- شاشة المعاينة والتعديل -->
+  <!-- شاشة التعديل والمعاينة والمشاركة -->
   <div id="editSection">
     
-    <!-- بطاقة الستوري بنسبة 9:16 -->
+    <!-- بطاقة المعاينة بنسبة 9:16 -->
     <div class="preview-wrapper" id="storyExportCard">
       <img id="previewImg" src="" alt="صورة المحطة">
       <div class="overlay-card">
@@ -182,20 +217,20 @@
       </div>
     </div>
 
-    <!-- حقول التعديل والخيارات -->
+    <!-- لوحة التعديل والخيارات -->
     <div class="controls-card">
       <div class="input-group">
-        <label>📍 اسم المكان أو الوجهة:</label>
-        <input type="text" class="input-field" id="inputLocation" oninput="updatePreview()" placeholder="مثال: وادي حنيفة، الدرعية، مقهى...">
+        <label>📍 اسم الوجهة أو المعلم:</label>
+        <input type="text" class="input-field" id="inputLocation" oninput="updatePreview()" placeholder="مثال: قصر المصمك، وادي حنيفة...">
       </div>
 
       <div class="input-group">
         <label>✍️ كلمة أو تعليق اللحظة:</label>
-        <input type="text" class="input-field" id="inputCaption" oninput="updatePreview()" placeholder="مثال: لحظة توثيق لا تُنسى...">
+        <input type="text" class="input-field" id="inputCaption" oninput="updatePreview()" placeholder="مثال: محطة استثنائية في الرياض...">
       </div>
 
       <div class="toggle-row">
-        <span>إظهار حالة الطقس ودرجة الحرارة</span>
+        <span>إظهار حالة الطقس والحرارة</span>
         <input type="checkbox" id="toggleWeather" checked onchange="updatePreview()">
       </div>
 
@@ -205,7 +240,7 @@
       </div>
     </div>
 
-    <!-- أزرار المشاركة المباشرة -->
+    <!-- أزرار النشر والمشاركة المباشرة -->
     <div class="actions-group">
       <button class="action-btn story" id="shareStoryBtn" onclick="shareToSocial('story')">
         <span>🚀 نشر لستوري سناب شات / إنستغرام</span>
@@ -216,15 +251,66 @@
       </button>
     </div>
 
-    <button class="retake-btn" onclick="resetCapture()">🔄 التقاط صورة أخرى</button>
+    <button class="retake-btn" onclick="resetCapture()">🔄 التقاط صورة أخرى أو العودة للخريطة</button>
   </div>
 </div>
 
 <script>
+  let map, userMarker;
+  let currentLat = 24.7136, currentLon = 46.6753;
   let currentCoordsText = "24.7136° N, 46.6753° E";
-  let currentWeatherText = "☀️ 26°C - معتدل";
+  let currentWeatherText = "☀️ 26°C - الرياض";
 
-  // 1. استقبال الصورة من الكاميرا
+  // 1. تهيئة الخريطة الداكنة الفاخرة (CartoDB Dark Matter)
+  function initMap() {
+    map = L.map('map', { zoomControl: false }).setView([currentLat, currentLon], 12);
+    
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; CartoDB',
+      maxZoom: 19
+    }).addTo(map);
+
+    // أيقونة ذهبية فخمة للدبوس
+    const goldIcon = L.divIcon({
+      className: 'custom-pin',
+      html: `<div style="background:#d4af37; width:16px; height:16px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 12px #d4af37;"></div>`,
+      iconSize: [16, 16],
+      iconAnchor: [8, 8]
+    });
+
+    userMarker = L.marker([currentLat, currentLon], { icon: goldIcon }).addTo(map)
+      .bindPopup('<b style="color:#000;">أنت هنا - نقطة الانطلاق</b>');
+
+    // تحديد موقع المستخدم الحي بالـ GPS
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition((pos) => {
+        currentLat = pos.coords.latitude;
+        currentLon = pos.coords.longitude;
+        currentCoordsText = `${currentLat.toFixed(4)}° N, ${currentLon.toFixed(4)}° E`;
+        map.setView([currentLat, currentLon], 14);
+        userMarker.setLatLng([currentLat, currentLon]);
+        fetchWeather(currentLat, currentLon);
+      }, () => {
+        fetchWeather(currentLat, currentLon);
+      });
+    } else {
+      fetchWeather(currentLat, currentLon);
+    }
+  }
+
+  // 2. جلب بيانات الطقس
+  async function fetchWeather(lat, lon) {
+    try {
+      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m`);
+      const data = await res.json();
+      currentWeatherText = `🌤️ ${Math.round(data.current.temperature_2m)}°C | رطوبة ${data.current.relative_humidity_2m}%`;
+    } catch (e) {
+      currentWeatherText = "🌤️ 26°C - معتدل";
+    }
+    updatePreview();
+  }
+
+  // 3. التقاط الصورة وإظهار شاشة التعديل
   function handleImageSelection(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -238,34 +324,16 @@
       const now = new Date();
       document.getElementById('displayDate').innerText = `CHRONICLE • ${now.toLocaleDateString('ar-SA')} - ${now.toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'})}`;
 
-      fetchGeoAndWeather();
+      // إضافة دبوس المحطة على الخريطة باسم اللحظة
+      const locName = document.getElementById('inputLocation').value.trim() || "محطة جديدة";
+      userMarker.bindPopup(`<b style="color:#000;">📍 ${locName}</b><br><small style="color:#555;">تم التوثيق بالصورة</small>`).openPopup();
+      
+      updatePreview();
     };
     reader.readAsDataURL(file);
   }
 
-  // 2. قراءة الموقع الفعلي والطقس
-  function fetchGeoAndWeather() {
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(async (pos) => {
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
-        currentCoordsText = `${lat.toFixed(4)}° N, ${lon.toFixed(4)}° E`;
-
-        try {
-          const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m`);
-          const data = await res.json();
-          currentWeatherText = `🌤️ ${Math.round(data.current.temperature_2m)}°C | رطوبة ${data.current.relative_humidity_2m}%`;
-        } catch (e) {
-          currentWeatherText = "🌤️ 26°C - الرياض";
-        }
-        updatePreview();
-      }, () => {
-        updatePreview();
-      });
-    }
-  }
-
-  // 3. تحديث المعاينة الحية فور الكتابة
+  // 4. تحديث المعاينة الحية للبطاقة
   function updatePreview() {
     const locVal = document.getElementById('inputLocation').value.trim();
     const capVal = document.getElementById('inputCaption').value.trim();
@@ -291,11 +359,11 @@
     }
   }
 
-  // 4. توليد البطاقة وفتح نافذة المشاركة (سناب / إنستا / واتساب)
+  // 5. توليد البطاقة والمشاركة (سناب / إنستا / واتساب)
   async function shareToSocial(targetType) {
     const btn = targetType === 'whatsapp' ? document.getElementById('shareWaBtn') : document.getElementById('shareStoryBtn');
     const originalText = btn.innerHTML;
-    btn.innerText = "⏳ جاري تجهيز الصورة...";
+    btn.innerText = "⏳ جاري إعداد الصورة...";
     btn.style.opacity = "0.7";
 
     const exportCard = document.getElementById('storyExportCard');
@@ -315,22 +383,20 @@
           return;
         }
 
-        const fileName = `Memory-${Date.now()}.png`;
+        const fileName = `Travel-Story-${Date.now()}.png`;
         const file = new File([blob], fileName, { type: 'image/png' });
 
-        // مشاركة النظام الرسمية (تفتح سناب / إنستا / واتساب فوراً)
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           try {
             await navigator.share({
               files: [file],
-              title: 'توثيق المحطة',
+              title: 'توثيق سجل الرحالة',
               text: `📍 ${document.getElementById('displayLocation').innerText} ✨`
             });
           } catch (err) {
-            console.log("تم إغلاق نافذة المشاركة.");
+            console.log("تم إلغاء المشاركة.");
           }
         } else {
-          // في حال عدم دعم المتصفح لمشاركة الملف المباشر يتم تنزيلها للألبوم
           const link = document.createElement('a');
           link.download = fileName;
           link.href = canvas.toDataURL('image/png');
@@ -338,7 +404,7 @@
 
           if (targetType === 'whatsapp') {
             const loc = encodeURIComponent(document.getElementById('displayLocation').innerText);
-            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent('تم حفظ الصورة في ألبومي لمشاركتها: ' + loc)}`, '_blank');
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent('تم حفظ الصورة في ألبومي لمشاركتها معك: ' + loc)}`, '_blank');
           } else {
             alert("تم حفظ بطاقة الستوري في ألبوم الصور! يمكنك الآن فتح سناب شات أو إنستغرام ونشرها من الألبوم مباشرة 📸");
           }
@@ -362,6 +428,8 @@
     document.getElementById('editSection').style.display = 'none';
     document.getElementById('captureBox').style.display = 'flex';
   }
+
+  window.onload = initMap;
 </script>
 </body>
 </html>
