@@ -2,293 +2,366 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Traveler's Chronicle | سجل الرحالة الذكي</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>توثيق الرحلة والستوري الذكي</title>
+  <!-- مكتبة تحويل العناصر إلى صور بدقة عالية -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     :root {
-      --bg: #0d0f12;
-      --card: #161a20;
+      --bg: #0b0d12;
+      --card-bg: rgba(20, 24, 33, 0.9);
       --gold: #d4af37;
       --gold-dark: #aa820a;
-      --text: #ffffff;
+      --text: #f0f2f5;
       --muted: #8b949e;
-      --border: #2d333b;
-      --danger: #e63946;
+      --border: #232936;
+      --wa-color: #25D366;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background-color: var(--bg); color: var(--text); padding: 18px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-    .container { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 16px; }
-    
-    header { text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 14px; }
-    .badge { display: inline-block; padding: 4px 14px; border: 1px solid var(--gold); border-radius: 20px; color: var(--gold); font-size: 0.75rem; font-weight: bold; letter-spacing: 1px; margin-bottom: 8px; }
-    h1 { font-size: 1.4rem; color: var(--text); }
-    p.sub { font-size: 0.85rem; color: var(--muted); margin-top: 4px; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      background-image: radial-gradient(circle at 50% 0%, #1a2233 0%, var(--bg) 80%);
+    }
+    .app-container { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 16px; }
 
-    .action-box { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
-    .btn-stamp { width: 100%; background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #000; border: none; padding: 13px; border-radius: 10px; font-weight: bold; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
-    .btn-stamp:active { transform: scale(0.98); }
-    
-    .note-input { width: 100%; background: #0d0f12; border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 11px; font-size: 0.85rem; }
-    .note-input:focus { outline: none; border-color: var(--gold); }
+    header { text-align: center; padding: 6px 0 12px; border-bottom: 1px solid var(--border); }
+    .badge { display: inline-block; padding: 3px 12px; border: 1px solid var(--gold); border-radius: 20px; color: var(--gold); font-size: 0.7rem; font-weight: bold; letter-spacing: 1.5px; margin-bottom: 6px; }
+    h1 { font-size: 1.25rem; color: #fff; }
+    p.sub { font-size: 0.8rem; color: var(--muted); margin-top: 3px; }
 
-    .photo-actions { display: flex; gap: 10px; }
-    .photo-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px dashed var(--gold); border-radius: 8px; padding: 10px; font-size: 0.8rem; color: var(--gold); cursor: pointer; background: rgba(212, 175, 55, 0.05); text-align: center; }
-    .photo-btn:active { background: rgba(212, 175, 55, 0.15); }
-    input[type="file"] { display: none; }
-    
-    #photoPreview { width: 100%; max-height: 220px; object-fit: cover; border-radius: 8px; display: none; border: 1px solid var(--gold); }
+    /* منطقة التقاط الصورة */
+    .capture-box {
+      background: var(--card-bg);
+      border: 2px dashed var(--gold);
+      border-radius: 16px;
+      padding: 36px 16px;
+      text-align: center;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .capture-box:active { background: rgba(212, 175, 55, 0.08); }
+    .camera-icon { font-size: 2.6rem; }
+    .capture-btn-label { font-size: 0.95rem; font-weight: bold; color: var(--gold); }
+    #cameraInput { display: none; }
 
-    /* حاوية خريطة الأقمار الاصطناعية */
-    #map { height: 260px; width: 100%; border-radius: 12px; border: 1px solid var(--gold); box-shadow: 0 0 15px rgba(212, 175, 55, 0.15); }
+    /* منطقة التعديل والمعاينة */
+    #editSection { display: none; flex-direction: column; gap: 14px; }
 
-    .stamps-list { display: flex; flex-direction: column; gap: 14px; }
-    .stamp-card { background: var(--card); border: 1px dashed var(--gold); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
-    .stamp-header { display: flex; justify-content: space-between; align-items: flex-start; }
-    .stamp-city { font-weight: bold; font-size: 1.15rem; color: var(--gold); }
-    .stamp-weather { font-size: 0.8rem; color: #64b5f6; margin-top: 3px; }
-    .stamp-date { font-size: 0.75rem; color: var(--muted); }
-    .stamp-img { width: 100%; max-height: 250px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); display: block; }
-    .stamp-note { font-size: 0.9rem; color: #ececec; line-height: 1.4; background: rgba(0,0,0,0.3); padding: 8px 10px; border-radius: 6px; }
-    .btn-delete { background: none; border: none; color: var(--muted); font-size: 0.8rem; cursor: pointer; align-self: flex-end; padding: 4px; }
-    .btn-delete:hover { color: var(--danger); }
-    .empty-state { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 25px; }
+    .preview-wrapper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 9 / 16;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #000;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+    }
+    #previewImg { width: 100%; height: 100%; object-fit: cover; }
+
+    /* شريط البيانات المدمج أسفل الصورة للستوري */
+    .overlay-card {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: linear-gradient(to top, rgba(9, 10, 15, 0.95) 0%, rgba(9, 10, 15, 0.75) 70%, transparent 100%);
+      padding: 40px 18px 22px;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    }
+    .overlay-title { font-size: 1.3rem; font-weight: bold; color: #fff; }
+    .overlay-meta { font-size: 0.75rem; color: var(--gold); font-family: monospace; letter-spacing: 0.5px; }
+    .overlay-weather { font-size: 0.85rem; color: #e1e4e8; display: flex; align-items: center; gap: 6px; }
+    .overlay-caption { font-size: 0.9rem; color: #f0f2f5; margin-top: 4px; line-height: 1.4; border-right: 3px solid var(--gold); padding-right: 8px; }
+    .overlay-brand { font-size: 0.65rem; color: var(--muted); margin-top: 8px; letter-spacing: 1.5px; text-transform: uppercase; }
+
+    /* لوحة التعديل والخيارات */
+    .controls-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .input-group { display: flex; flex-direction: column; gap: 6px; text-align: right; }
+    .input-group label { font-size: 0.75rem; color: var(--muted); }
+    .input-field {
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      outline: none;
+    }
+    .input-field:focus { border-color: var(--gold); }
+
+    .toggle-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; }
+
+    /* شبكة أزرار المشاركة */
+    .actions-group { display: flex; flex-direction: column; gap: 10px; }
+    .action-btn {
+      border: none;
+      padding: 14px;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: opacity 0.2s;
+    }
+    .action-btn:active { transform: scale(0.98); }
+    .action-btn.story {
+      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      color: #12151c;
+      box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+    }
+    .action-btn.whatsapp {
+      background: var(--wa-color);
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+    }
+    .retake-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
-<div class="container">
+<div class="app-container">
   <header>
-    <div class="badge">NFC PASSPORT EDITION</div>
-    <h1>سجل الرحالة الذكي</h1>
-    <p class="sub">تتبع حي بالأقمار الاصطناعية لمسارات التيشيرت</p>
+    <div class="badge">SMART CHRONICLE</div>
+    <h1>توثيق بطاقة الرحلة واللحظة</h1>
+    <p class="sub">صوّر، عدّل بياناتك، وشاركها مباشرة</p>
   </header>
 
-  <div class="action-box">
-    <input type="text" id="journeyNote" class="note-input" placeholder="اكتب ذكرى هذه المحطة (اختياري)..." />
-    
-    <div class="photo-actions">
-      <label for="cameraInput" class="photo-btn">
-        📸 فتح الكاميرا
-      </label>
-      <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="handleImage(event)">
-
-      <label for="galleryInput" class="photo-btn">
-        🖼️ من الألبوم
-      </label>
-      <input type="file" id="galleryInput" accept="image/*" onchange="handleImage(event)">
-    </div>
-
-    <img id="photoPreview" alt="معاينة الصورة" />
-
-    <button class="btn-stamp" onclick="recordLocation()">
-      📍 توثيق المحطة مع الطقس والصورة
-    </button>
-    <p id="statusMsg" style="font-size: 0.8rem; color: var(--gold); text-align: center; display: none;"></p>
+  <!-- صندوق التقاط الصورة المباشر -->
+  <div class="capture-box" id="captureBox" onclick="document.getElementById('cameraInput').click()">
+    <div class="camera-icon">📸</div>
+    <div class="capture-btn-label">اضغط هنا لفتح الكاميرا والتقاط الصورة</div>
+    <div style="font-size: 0.75rem; color: var(--muted);">سيتم التعرف على الموقع والطقس تلقائياً</div>
   </div>
+  <input type="file" accept="image/*" capture="environment" id="cameraInput" onchange="handleImageSelection(event)">
 
-  <div id="map"></div>
-
-  <div>
-    <h3 style="font-size: 1rem; margin-bottom: 12px; color: var(--gold);">محطات التيشيرت الموثقة</h3>
-    <div class="stamps-list" id="stampsContainer">
-      <div class="empty-state">لم يتم توثيق أي محطة بعد. قرّب التيشيرت واضغط على الزر أعلاه!</div>
+  <!-- شاشة المعاينة والتعديل -->
+  <div id="editSection">
+    
+    <!-- بطاقة الستوري بنسبة 9:16 -->
+    <div class="preview-wrapper" id="storyExportCard">
+      <img id="previewImg" src="" alt="صورة المحطة">
+      <div class="overlay-card">
+        <div class="overlay-title" id="displayLocation">الرياض</div>
+        <div class="overlay-meta" id="displayCoords">24.7136° N, 46.6753° E</div>
+        <div class="overlay-weather" id="displayWeather">☀️ --°C</div>
+        <div class="overlay-caption" id="displayCaption" style="display:none;"></div>
+        <div class="overlay-brand" id="displayDate"></div>
+      </div>
     </div>
+
+    <!-- حقول التعديل والخيارات -->
+    <div class="controls-card">
+      <div class="input-group">
+        <label>📍 اسم المكان أو الوجهة:</label>
+        <input type="text" class="input-field" id="inputLocation" oninput="updatePreview()" placeholder="مثال: وادي حنيفة، الدرعية، مقهى...">
+      </div>
+
+      <div class="input-group">
+        <label>✍️ كلمة أو تعليق اللحظة:</label>
+        <input type="text" class="input-field" id="inputCaption" oninput="updatePreview()" placeholder="مثال: لحظة توثيق لا تُنسى...">
+      </div>
+
+      <div class="toggle-row">
+        <span>إظهار حالة الطقس ودرجة الحرارة</span>
+        <input type="checkbox" id="toggleWeather" checked onchange="updatePreview()">
+      </div>
+
+      <div class="toggle-row">
+        <span>إظهار إحداثيات الـ GPS</span>
+        <input type="checkbox" id="toggleCoords" checked onchange="updatePreview()">
+      </div>
+    </div>
+
+    <!-- أزرار المشاركة المباشرة -->
+    <div class="actions-group">
+      <button class="action-btn story" id="shareStoryBtn" onclick="shareToSocial('story')">
+        <span>🚀 نشر لستوري سناب شات / إنستغرام</span>
+      </button>
+
+      <button class="action-btn whatsapp" id="shareWaBtn" onclick="shareToSocial('whatsapp')">
+        <span>💬 إرسال عبر واتساب (محادثة أو حالة)</span>
+      </button>
+    </div>
+
+    <button class="retake-btn" onclick="resetCapture()">🔄 التقاط صورة أخرى</button>
   </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  let map, markers = [], routePolyline = null;
-  let journeys = JSON.parse(localStorage.getItem('shirt_journeys_v3') || '[]');
-  let capturedBase64 = null;
+  let currentCoordsText = "24.7136° N, 46.6753° E";
+  let currentWeatherText = "☀️ 26°C - معتدل";
 
-  function handleImage(event) {
+  // 1. استقبال الصورة من الكاميرا
+  function handleImageSelection(event) {
     const file = event.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = function(e) {
-      const img = new Image();
-      img.onload = function() {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        let width = img.width;
-        let height = img.height;
-        const maxDim = 500;
+      document.getElementById('previewImg').src = e.target.result;
+      document.getElementById('captureBox').style.display = 'none';
+      document.getElementById('editSection').style.display = 'flex';
 
-        if (width > height && width > maxDim) {
-          height = Math.round((height * maxDim) / width);
-          width = maxDim;
-        } else if (height > maxDim) {
-          width = Math.round((width * maxDim) / height);
-          height = maxDim;
-        }
+      const now = new Date();
+      document.getElementById('displayDate').innerText = `CHRONICLE • ${now.toLocaleDateString('ar-SA')} - ${now.toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'})}`;
 
-        canvas.width = width;
-        canvas.height = height;
-        ctx.drawImage(img, 0, 0, width, height);
-
-        capturedBase64 = canvas.toDataURL('image/jpeg', 0.65);
-        const preview = document.getElementById('photoPreview');
-        preview.src = capturedBase64;
-        preview.style.display = 'block';
-      };
-      img.src = e.target.result;
+      fetchGeoAndWeather();
     };
     reader.readAsDataURL(file);
   }
 
-  function initMap() {
-    map = L.map('map').setView([24.7136, 46.6753], 6);
-    
-    // خريطة تصوير الأقمار الاصطناعية المباشرة عالية الدقة من Esri
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      maxZoom: 18,
-      attribution: 'Tiles &copy; Esri &mdash; Earthstar Geographics'
-    }).addTo(map);
+  // 2. قراءة الموقع الفعلي والطقس
+  function fetchGeoAndWeather() {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(async (pos) => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        currentCoordsText = `${lat.toFixed(4)}° N, ${lon.toFixed(4)}° E`;
 
-    renderJourneys();
+        try {
+          const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m`);
+          const data = await res.json();
+          currentWeatherText = `🌤️ ${Math.round(data.current.temperature_2m)}°C | رطوبة ${data.current.relative_humidity_2m}%`;
+        } catch (e) {
+          currentWeatherText = "🌤️ 26°C - الرياض";
+        }
+        updatePreview();
+      }, () => {
+        updatePreview();
+      });
+    }
   }
 
-  async function getWeather(lat, lng) {
+  // 3. تحديث المعاينة الحية فور الكتابة
+  function updatePreview() {
+    const locVal = document.getElementById('inputLocation').value.trim();
+    const capVal = document.getElementById('inputCaption').value.trim();
+    const showWeather = document.getElementById('toggleWeather').checked;
+    const showCoords = document.getElementById('toggleCoords').checked;
+
+    document.getElementById('displayLocation').innerText = locVal || "الرياض";
+
+    const weatherElem = document.getElementById('displayWeather');
+    weatherElem.innerText = currentWeatherText;
+    weatherElem.style.display = showWeather ? 'flex' : 'none';
+
+    const coordsElem = document.getElementById('displayCoords');
+    coordsElem.innerText = currentCoordsText;
+    coordsElem.style.display = showCoords ? 'block' : 'none';
+
+    const captionElem = document.getElementById('displayCaption');
+    if (capVal) {
+      captionElem.innerText = `« ${capVal} »`;
+      captionElem.style.display = 'block';
+    } else {
+      captionElem.style.display = 'none';
+    }
+  }
+
+  // 4. توليد البطاقة وفتح نافذة المشاركة (سناب / إنستا / واتساب)
+  async function shareToSocial(targetType) {
+    const btn = targetType === 'whatsapp' ? document.getElementById('shareWaBtn') : document.getElementById('shareStoryBtn');
+    const originalText = btn.innerHTML;
+    btn.innerText = "⏳ جاري تجهيز الصورة...";
+    btn.style.opacity = "0.7";
+
+    const exportCard = document.getElementById('storyExportCard');
+
     try {
-      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true`);
-      const data = await res.json();
-      return `${Math.round(data.current_weather.temperature)}°C`;
-    } catch(e) {
-      return "26°C";
+      const canvas = await html2canvas(exportCard, {
+        scale: 2.5,
+        useCORS: true,
+        backgroundColor: "#000"
+      });
+
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          alert("تعذر إنشاء الصورة.");
+          btn.innerHTML = originalText;
+          btn.style.opacity = "1";
+          return;
+        }
+
+        const fileName = `Memory-${Date.now()}.png`;
+        const file = new File([blob], fileName, { type: 'image/png' });
+
+        // مشاركة النظام الرسمية (تفتح سناب / إنستا / واتساب فوراً)
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: 'توثيق المحطة',
+              text: `📍 ${document.getElementById('displayLocation').innerText} ✨`
+            });
+          } catch (err) {
+            console.log("تم إغلاق نافذة المشاركة.");
+          }
+        } else {
+          // في حال عدم دعم المتصفح لمشاركة الملف المباشر يتم تنزيلها للألبوم
+          const link = document.createElement('a');
+          link.download = fileName;
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+
+          if (targetType === 'whatsapp') {
+            const loc = encodeURIComponent(document.getElementById('displayLocation').innerText);
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent('تم حفظ الصورة في ألبومي لمشاركتها: ' + loc)}`, '_blank');
+          } else {
+            alert("تم حفظ بطاقة الستوري في ألبوم الصور! يمكنك الآن فتح سناب شات أو إنستغرام ونشرها من الألبوم مباشرة 📸");
+          }
+        }
+
+        btn.innerHTML = originalText;
+        btn.style.opacity = "1";
+      }, 'image/png');
+
+    } catch (e) {
+      console.error(e);
+      alert("حدث خطأ أثناء معالجة الصورة.");
+      btn.innerHTML = originalText;
+      btn.style.opacity = "1";
     }
   }
 
-  async function recordLocation() {
-    const status = document.getElementById('statusMsg');
-    const note = document.getElementById('journeyNote').value;
-    status.style.display = 'block';
-    status.innerText = "جاري التقاط الإحداثيات والطقس...";
-
-    if (!navigator.geolocation) {
-      status.innerText = "المتصفح لا يدعم تحديد الموقع.";
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-      const lat = pos.coords.latitude;
-      const lng = pos.coords.longitude;
-      
-      let cityName = "محطة جديدة";
-      let weatherInfo = "معتدل";
-
-      try {
-        const [geoRes, weatherRes] = await Promise.all([
-          fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`),
-          getWeather(lat, lng)
-        ]);
-        const data = await geoRes.json();
-        cityName = data.address.city || data.address.state || data.address.country || "الرياض";
-        if (weatherRes) weatherInfo = weatherRes;
-      } catch(e) {}
-
-      const newEntry = {
-        id: Date.now(),
-        city: cityName,
-        lat: lat,
-        lng: lng,
-        weather: weatherInfo,
-        note: note,
-        photo: capturedBase64,
-        date: new Date().toLocaleDateString('ar-SA', { year: 'numeric', month: 'short', day: 'numeric' })
-      };
-
-      journeys.unshift(newEntry);
-      
-      try {
-        localStorage.setItem('shirt_journeys_v3', JSON.stringify(journeys));
-      } catch (err) {
-        journeys.pop();
-        localStorage.setItem('shirt_journeys_v3', JSON.stringify(journeys));
-      }
-      
-      document.getElementById('journeyNote').value = "";
-      document.getElementById('photoPreview').style.display = "none";
-      document.getElementById('cameraInput').value = "";
-      document.getElementById('galleryInput').value = "";
-      capturedBase64 = null;
-
-      status.innerText = `تم توثيق المحطة بنجاح في ${cityName}! ✨`;
-      renderJourneys();
-    }, () => {
-      status.innerText = "يرجى تفعيل الـ GPS في الهاتف والسماح بالوصول للموقع.";
-    });
+  function resetCapture() {
+    document.getElementById('cameraInput').value = "";
+    document.getElementById('previewImg').src = "";
+    document.getElementById('editSection').style.display = 'none';
+    document.getElementById('captureBox').style.display = 'flex';
   }
-
-  function deleteEntry(id) {
-    journeys = journeys.filter(item => item.id !== id);
-    localStorage.setItem('shirt_journeys_v3', JSON.stringify(journeys));
-    renderJourneys();
-  }
-
-  function renderJourneys() {
-    const list = document.getElementById('stampsContainer');
-    list.innerHTML = "";
-    markers.forEach(m => map.removeLayer(m));
-    markers = [];
-    if (routePolyline) {
-      map.removeLayer(routePolyline);
-    }
-
-    if (journeys.length === 0) {
-      list.innerHTML = `<div class="empty-state">لم يتم توثيق أي محطة بعد.</div>`;
-      return;
-    }
-
-    const latlngs = [];
-
-    journeys.forEach(j => {
-      const card = document.createElement('div');
-      card.className = "stamp-card";
-      card.innerHTML = `
-        <div class="stamp-header">
-          <div>
-            <div class="stamp-city">📍 ${j.city}</div>
-            <div class="stamp-weather">🌤️ درجة الحرارة: ${j.weather}</div>
-          </div>
-          <div class="stamp-date">${j.date}</div>
-        </div>
-        ${j.photo ? `<img src="${j.photo}" class="stamp-img" alt="صورة المحطة" />` : ''}
-        ${j.note ? `<div class="stamp-note">${j.note}</div>` : ''}
-        <button class="btn-delete" onclick="deleteEntry(${j.id})">حذف المحطة ✕</button>
-      `;
-      list.appendChild(card);
-
-      const marker = L.circleMarker([j.lat, j.lng], {
-        color: '#ffffff',
-        weight: 2,
-        fillColor: '#d4af37',
-        fillOpacity: 1,
-        radius: 8
-      }).addTo(map);
-      marker.bindPopup(`<b>${j.city}</b><br>${j.date}<br>${j.weather}`);
-      markers.push(marker);
-
-      latlngs.push([j.lat, j.lng]);
-    });
-
-    // رسم مسار الرحلة الذهبي المتصل بين المدن
-    if (latlngs.length > 1) {
-      routePolyline = L.polyline(latlngs, {
-        color: '#d4af37',
-        weight: 3,
-        dashArray: '6, 8',
-        opacity: 0.9
-      }).addTo(map);
-    }
-
-    map.setView([journeys[0].lat, journeys[0].lng], 11);
-  }
-
-  window.onload = initMap;
 </script>
 </body>
 </html>
