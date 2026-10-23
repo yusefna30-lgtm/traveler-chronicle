@@ -203,7 +203,7 @@
     }
     #previewImg { width: 100%; height: 100%; object-fit: cover; transition: filter 0.3s ease; }
 
-    /* تصميم بطاقة صعود الطائرة الرقمية مع اتجاه LTR */
+    /* تصميم بطاقة صعود الطائرة الرقمية */
     .boarding-pass-card {
       width: 100%;
       background: #11141c;
@@ -215,7 +215,7 @@
       box-shadow: 0 12px 40px rgba(0,0,0,0.9);
       position: relative;
       user-select: none;
-      direction: ltr; /* التذكرة تعمل بالنظام القياسي الدولي */
+      direction: ltr;
       text-align: left;
     }
     .bp-header {
@@ -514,7 +514,7 @@
       <img id="previewImg" class="filter-none" src="" alt="صورة المحطة">
 
       <div class="title-sticker" id="draggableTitle">
-        <div class="title-text" id="displayLocation">الرياض</div>
+        <div class="title-text" id="displayLocation">العلا</div>
         <div class="caption-text" id="displayCaption" style="display:none;"></div>
       </div>
 
@@ -527,7 +527,7 @@
       </div>
     </div>
 
-    <!-- 2. قالب بطاقة صعود الطائرة (Boarding Pass) المعدل والمنضبط -->
+    <!-- 2. قالب بطاقة صعود الطائرة (Boarding Pass) -->
     <div class="boarding-pass-card" id="boardingPassBox" style="display:none;">
       <div class="bp-header">
         <div class="bp-brand">✈️ EZWA AIRWAYS</div>
@@ -546,7 +546,7 @@
         <div class="bp-plane-arrow">➔ ✈️ ➔</div>
         <div style="text-align:right;">
           <div class="bp-code" id="bpDestCode">DESTINATION</div>
-          <div class="bp-city" id="bpDestName">الرياض</div>
+          <div class="bp-city" id="bpDestName">العلا</div>
         </div>
       </div>
 
@@ -590,10 +590,13 @@
       </div>
     </div>
 
-    <!-- لوحة التعديل -->
+    <!-- لوحة التعديل مع حقل نقطة الانطلاق المخصص -->
     <div class="studio-panel">
       <div style="display:flex; flex-direction:column; gap:6px;">
-        <input type="text" class="input-field" id="inputLocation" oninput="updateLiveText()" placeholder="📍 اسم الوجهة أو المعلم">
+        <div style="display:flex; gap:6px;">
+          <input type="text" class="input-field" id="inputOrigin" oninput="updateLiveText()" placeholder="🛫 نقطة الانطلاق (مثل: الرياض)" style="flex:1;">
+          <input type="text" class="input-field" id="inputLocation" oninput="updateLiveText()" placeholder="🛬 الوجهة الحالية (مثل: العلا)" style="flex:1;">
+        </div>
         <input type="text" class="input-field" id="inputCaption" oninput="updateLiveText()" placeholder="✍️ تعليق أو ذكرى خاصة باللحظة">
       </div>
 
@@ -720,7 +723,7 @@
   let currentCoordsText = "24.7136° N, 46.6753° E";
   let currentWeatherText = "☀️ 26°C - معتدل";
   let capturedBase64 = "";
-  let lastRecordedLocation = "نقطة الانطلاق";
+  let defaultOrigin = "نقطة الانطلاق";
 
   const STORAGE_KEY = "CHRONICLE_GARMENT_ARCHIVE_V1";
 
@@ -808,6 +811,12 @@
         document.getElementById('bpDateVal').innerText = now.toLocaleDateString('en-GB');
         document.getElementById('bpTimeVal').innerText = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 
+        // ملء خانة الانطلاق تلقائياً إن لم تكن مكتوبة
+        const originInput = document.getElementById('inputOrigin');
+        if (!originInput.value) {
+          originInput.value = defaultOrigin;
+        }
+
         updateLiveText();
         enableDragTitle();
       };
@@ -845,7 +854,8 @@
     saveBtn.innerText = "⏳ جاري الرفع إلى السحابة...";
     saveBtn.disabled = true;
 
-    const locName = document.getElementById('inputLocation').value.trim() || "محطة موثقة";
+    const locName = document.getElementById('inputLocation').value.trim() || "العلا";
+    const originName = document.getElementById('inputOrigin').value.trim() || defaultOrigin;
     const caption = document.getElementById('inputCaption').value.trim();
     const dateStr = new Date().toLocaleDateString('ar-SA');
 
@@ -855,6 +865,7 @@
       lon: currentLon,
       coords: currentCoordsText,
       location: locName,
+      origin: originName,
       caption: caption,
       weather: currentWeatherText,
       date: dateStr,
@@ -967,11 +978,11 @@
       scrollContainer.innerHTML = `<div style="font-size:0.75rem; color:var(--muted); padding:10px;">لا توجد محطات موثقة حالياً. السجل بانتظار رحلتك القادمة!</div>`;
       document.getElementById('statDistance').innerText = "0 كم";
       document.getElementById('statFirstDate').innerText = "--";
-      lastRecordedLocation = "نقطة الانطلاق";
+      defaultOrigin = "نقطة الانطلاق";
       return;
     }
 
-    lastRecordedLocation = archive[0].location || "المحطة السابقة";
+    defaultOrigin = archive[0].location || "نقطة الانطلاق";
 
     const chronologicalItems = [...archive].sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
     const pathCoordinates = chronologicalItems.map(item => [item.lat, item.lon]);
@@ -1030,7 +1041,8 @@
   }
 
   function updateLiveText() {
-    const loc = document.getElementById('inputLocation').value.trim() || "الرياض";
+    const loc = document.getElementById('inputLocation').value.trim() || "العلا";
+    const origin = document.getElementById('inputOrigin').value.trim() || defaultOrigin;
     const cap = document.getElementById('inputCaption').value.trim();
 
     // تحديث بطاقة الستوري
@@ -1046,9 +1058,9 @@
       capElem.style.display = 'none';
     }
 
-    // تحديث بطاقة الـ Boarding Pass
+    // تحديث بطاقة الـ Boarding Pass فوراً بالقيمتين
     document.getElementById('bpDestName').innerText = loc;
-    document.getElementById('bpOriginName').innerText = lastRecordedLocation;
+    document.getElementById('bpOriginName').innerText = origin;
     document.getElementById('bpWeatherVal').innerText = currentWeatherText.split('|')[0] || currentWeatherText;
   }
 
@@ -1116,7 +1128,7 @@
           await navigator.share({
             files: [file],
             title: 'بطاقة صعود الرحالة | عِزوة',
-            text: `📍 وجهتي الحالية: ${document.getElementById('inputLocation').value || 'الرياض'} ✈️`
+            text: `📍 من ${document.getElementById('inputOrigin').value || 'الرياض'} إلى ${document.getElementById('inputLocation').value || 'العلا'} ✈️`
           });
         } else {
           const link = document.createElement('a');
