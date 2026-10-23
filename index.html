@@ -19,6 +19,7 @@
       --card-bg: rgba(18, 22, 31, 0.94);
       --gold: #d4af37;
       --gold-dark: #aa820a;
+      --gold-glow: rgba(212, 175, 55, 0.4);
       --text: #f0f3f8;
       --muted: #8a94a6;
       --border: #222938;
@@ -40,8 +41,52 @@
 
     header { text-align: center; padding: 4px 0 8px; border-bottom: 1px solid var(--border); }
     .badge { display: inline-block; padding: 2px 10px; border: 1px solid var(--gold); border-radius: 20px; color: var(--gold); font-size: 0.65rem; font-weight: bold; letter-spacing: 1.5px; margin-bottom: 4px; }
-    h1 { font-size: 1.2rem; color: #fff; }
+    h1 { font-size: 1.25rem; color: #fff; }
     p.sub { font-size: 0.75rem; color: var(--muted); }
+
+    /* 3. كرت ملكية القطعة وبصمة الـ NFC الفاخرة */
+    .ownership-card {
+      background: rgba(18, 22, 31, 0.7);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 12px;
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    }
+    .brand-title { font-size: 0.95rem; font-weight: 900; color: var(--gold); letter-spacing: 0.5px; }
+    .edition-tag { font-size: 0.65rem; color: var(--muted); margin-top: 1px; font-family: monospace; }
+    .nfc-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      background: rgba(212, 175, 55, 0.12);
+      border: 1px solid var(--gold);
+      border-radius: 14px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--gold);
+    }
+
+    /* 2. شريط إحصائيات مسار القطعة */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .stat-box {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 4px;
+      text-align: center;
+    }
+    .stat-val { font-size: 1rem; font-weight: 900; color: var(--gold); }
+    .stat-lbl { font-size: 0.65rem; color: var(--muted); margin-top: 2px; }
 
     /* خريطة الأثر */
     .map-card {
@@ -63,7 +108,7 @@
       font-weight: bold;
     }
     .map-style-btns { display: flex; gap: 6px; }
-    #map { width: 100%; height: 210px; background: #1a2233; }
+    #map { width: 100%; height: 215px; background: #1a2233; }
 
     /* أزرار التوثيق المزدوجة */
     .capture-row {
@@ -128,7 +173,7 @@
     .archive-loc { font-weight: bold; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .archive-date { color: var(--muted); font-size: 0.6rem; margin-top: 2px; }
 
-    /* زر الحذف الفردي أعلى كل بطاقة */
+    /* 4. زر الحذف الفردي المحمي بالرمز */
     .card-delete-btn {
       position: absolute;
       top: 5px;
@@ -302,12 +347,39 @@
 
 <div class="app-container">
   <header>
-    <div class="badge">EZWA CHRONICLE • CLOUD ARCHIVE</div>
+    <div class="badge">EZWA CHRONICLE • EDITION 01</div>
     <h1>أرشيف الرحالة التفاعلي</h1>
     <p class="sub">سجل الرحلات الدائم المتصل بقطعة التيشيرت</p>
   </header>
 
-  <!-- خريطة أثر الرحلات -->
+  <!-- 3. كرت ملكية القطعة والبصمة الرقمية الموثقة -->
+  <div class="ownership-card">
+    <div>
+      <div class="brand-title">عِزوة • EZWA</div>
+      <div class="edition-tag">SERIAL: EZW-2026-CHRONICLE-01</div>
+    </div>
+    <div class="nfc-pill">
+      <span>📶 موثق NFC</span>
+    </div>
+  </div>
+
+  <!-- 2. لوحة الإحصائيات الحية لرحلات القطعة -->
+  <div class="stats-bar">
+    <div class="stat-box">
+      <div class="stat-val" id="statDestCount">0</div>
+      <div class="stat-lbl">📍 محطات موثقة</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val" id="statDistance">0 كم</div>
+      <div class="stat-lbl">🌍 مسافة المسار</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val" id="statFirstDate">--</div>
+      <div class="stat-lbl">⏳ أول انطلاقة</div>
+    </div>
+  </div>
+
+  <!-- خريطة أثر الرحلات مع المسار المترابط -->
   <div class="map-card">
     <div class="map-header">
       <span>🗺️ خريطة أثر الرحلات</span>
@@ -469,7 +541,6 @@
     }
   };
 
-  // حذف مستند واحد محدد من السحابة بواسطة المعرف (docId)
   window.deleteSingleCloudEntry = async function(docId) {
     if (!docId) return false;
     try {
@@ -489,7 +560,10 @@
 </script>
 
 <script>
-  let map, markersGroup, currentTileLayer;
+  // 4. رمز المالك السري لحماية حذف الذكريات
+  const OWNER_PIN = "1976";
+
+  let map, markersGroup, currentTileLayer, routePolyline;
   let currentLat = 24.7136, currentLon = 46.6753;
   let currentCoordsText = "24.7136° N, 46.6753° E";
   let currentWeatherText = "☀️ 26°C - معتدل";
@@ -637,16 +711,22 @@
     }
   }
 
-  // حذف محطة واحدة مختارة فقط
+  // 4. حذف محطة واحدة مع التحقق من رمز المالك 1976
   async function deleteSingleEntry(index, docId) {
-    if (!confirm("هل أنت متأكد من رغبتك في حذف هذه المحطة بالتحديد؟")) return;
+    const enteredPin = prompt("🔒 هذه العملية تتطلب تصريح المالك.\nيرجى إدخال الرمز السري للحذف:");
+    if (enteredPin === null) return;
 
-    // حذف من الذاكرة المحلية
+    if (enteredPin !== OWNER_PIN) {
+      alert("⚠️ الرمز غير صحيح. لا يمكن لغير المالك حذف المحطات!");
+      return;
+    }
+
+    if (!confirm("هل أنت متأكد من رغبتك في حذف هذه المحطة نهائياً؟")) return;
+
     let localArchive = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
     localArchive.splice(index, 1);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(localArchive));
 
-    // حذف من السحابة إذا وُجد المعرف
     if (docId && window.deleteSingleCloudEntry) {
       await window.deleteSingleCloudEntry(docId);
     }
@@ -654,6 +734,30 @@
     renderArchiveCards(localArchive);
     alert("تم حذف المحطة بنجاح!");
     window.syncCloudArchive();
+  }
+
+  // 2. دالة حساب المسافة الجغرافية (Haversine Formula) بالكيلومتر
+  function calculateTotalDistance(points) {
+    if (points.length < 2) return 0;
+    let totalKm = 0;
+    const R = 6371; // نصف قطر الأرض بالكيلومتر
+
+    for (let i = 0; i < points.length - 1; i++) {
+      const lat1 = points[i][0] * Math.PI / 180;
+      const lon1 = points[i][1] * Math.PI / 180;
+      const lat2 = points[i+1][0] * Math.PI / 180;
+      const lon2 = points[i+1][1] * Math.PI / 180;
+
+      const dLat = lat2 - lat1;
+      const dLon = lon2 - lon1;
+
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1) * Math.cos(lat2) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      totalKm += R * c;
+    }
+    return Math.round(totalKm);
   }
 
   window.syncCloudArchive = async function() {
@@ -675,15 +779,42 @@
 
   function renderArchiveCards(archive) {
     markersGroup.clearLayers();
+    if (routePolyline) {
+      map.removeLayer(routePolyline);
+    }
+
     const scrollContainer = document.getElementById('archiveScroll');
     scrollContainer.innerHTML = "";
 
     document.getElementById('archiveTotal').innerText = `(${archive.length})`;
+    document.getElementById('statDestCount').innerText = archive.length;
 
     if (archive.length === 0) {
-      scrollContainer.innerHTML = `<div style="font-size:0.75rem; color:var(--muted); padding:10px;">لا توجد محطات موثقة حالياً.</div>`;
+      scrollContainer.innerHTML = `<div style="font-size:0.75rem; color:var(--muted); padding:10px;">لا توجد محطات موثقة حالياً. السجل بانتظار رحلتك القادمة!</div>`;
+      document.getElementById('statDistance').innerText = "0 كم";
+      document.getElementById('statFirstDate').innerText = "--";
       return;
     }
+
+    // ترتيب المحطات زمنياً لرسم خط السير من الأقدم إلى الأحدث
+    const chronologicalItems = [...archive].sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+    const pathCoordinates = chronologicalItems.map(item => [item.lat, item.lon]);
+
+    // 1. رسم خط مسار الرحلة المتصل باللون الذهبي النيون
+    if (pathCoordinates.length > 1) {
+      routePolyline = L.polyline(pathCoordinates, {
+        color: '#d4af37',
+        weight: 3.5,
+        opacity: 0.85,
+        dashArray: '6, 8',
+        lineCap: 'round'
+      }).addTo(map);
+    }
+
+    // 2. تحديث لوحة الإحصائيات (المسافة + تاريخ أول محطة)
+    const totalDist = calculateTotalDistance(pathCoordinates);
+    document.getElementById('statDistance').innerText = `${totalDist} كم`;
+    document.getElementById('statFirstDate').innerText = chronologicalItems[0].date || "--";
 
     archive.forEach((item, index) => {
       const pinIcon = L.divIcon({
@@ -700,7 +831,7 @@
           <b style="font-size:0.85rem;">📍 ${item.location}</b><br>
           <small style="color:#666;">${item.date} • ${item.weather}</small>
           <div style="margin-top:6px; text-align:center;">
-            <button onclick="deleteSingleEntry(${index}, '${item.id || ''}')" style="background:#ef4444; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:0.7rem; cursor:pointer;">🗑️ حذف هذه المحطة</button>
+            <button onclick="deleteSingleEntry(${index}, '${item.id || ''}')" style="background:#ef4444; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:0.7rem; cursor:pointer;">🔒 🗑️ حذف هذه المحطة</button>
           </div>
         </div>
       `);
