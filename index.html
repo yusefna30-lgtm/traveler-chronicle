@@ -64,12 +64,18 @@
     .map-style-btns { display: flex; gap: 6px; }
     #map { width: 100%; height: 210px; background: #1a2233; }
 
-    /* صندوق الكاميرا المباشر */
+    /* أزرار التوثيق المزدوجة */
+    .capture-row {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+    }
     .capture-box {
+      flex: 1;
       background: var(--card-bg);
       border: 2px dashed var(--gold);
       border-radius: 14px;
-      padding: 18px 14px;
+      padding: 16px 8px;
       text-align: center;
       cursor: pointer;
       display: flex;
@@ -79,10 +85,10 @@
       user-select: none;
       -webkit-tap-highlight-color: transparent;
     }
-    .capture-box:active { background: rgba(212, 175, 55, 0.08); }
+    .capture-box:active { background: rgba(212, 175, 55, 0.12); transform: scale(0.98); }
     .camera-icon { font-size: 1.8rem; }
-    .capture-btn-label { font-size: 0.9rem; font-weight: bold; color: var(--gold); }
-    #cameraInput { display: none; }
+    .capture-btn-label { font-size: 0.88rem; font-weight: bold; color: var(--gold); }
+    .capture-sub { font-size: 0.68rem; color: var(--muted); }
 
     /* شريط أرشيف المحطات السابقة */
     .archive-section {
@@ -120,7 +126,7 @@
     .archive-loc { font-weight: bold; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .archive-date { color: var(--muted); font-size: 0.6rem; margin-top: 2px; }
 
-    /* شاشة الاستوديو والتعديل */
+    /* استوديو المعاينة والتعديل */
     #editSection { display: none; flex-direction: column; gap: 12px; }
 
     .story-canvas-box {
@@ -287,13 +293,24 @@
     <div id="map"></div>
   </div>
 
-  <!-- زر تشغيل الكاميرا الخلفية مباشرة -->
-  <label class="capture-box" id="captureBox" for="cameraInput">
-    <div class="camera-icon">📸</div>
-    <div class="capture-btn-label">توثيق محطة جديدة</div>
-    <div style="font-size: 0.75rem; color: var(--muted);">اضغط لفتح الكاميرا فوراً وتوثيق موقعك وطقسك الحالي</div>
-  </label>
-  <input type="file" accept="image/*" capture="environment" id="cameraInput" onchange="handleImageSelection(event)">
+  <!-- خياران واضحان ومباشران للتوثيق -->
+  <div class="capture-row" id="captureRow">
+    <!-- الزر الأول: التقاط بالكاميرا فوراً -->
+    <label class="capture-box" for="cameraDirectInput">
+      <div class="camera-icon">📸</div>
+      <div class="capture-btn-label">التقاط بالكاميرا</div>
+      <div class="capture-sub">فتح عدسة التصوير الآن</div>
+    </label>
+    <input type="file" accept="image/*" capture="environment" id="cameraDirectInput" style="display:none;" onchange="handleImageSelection(event)">
+
+    <!-- الزر الثاني: اختيار صورة من المعرض -->
+    <label class="capture-box" for="galleryDirectInput">
+      <div class="camera-icon">🖼️</div>
+      <div class="capture-btn-label">ألبوم الصور</div>
+      <div class="capture-sub">اختيار من الاستوديو</div>
+    </label>
+    <input type="file" accept="image/*" id="galleryDirectInput" style="display:none;" onchange="handleImageSelection(event)">
+  </div>
 
   <!-- معرض المحطات المحفوظة -->
   <div class="archive-section" id="archiveSection">
@@ -517,7 +534,7 @@
         capturedBase64 = canvas.toDataURL('image/jpeg', 0.78);
 
         document.getElementById('previewImg').src = capturedBase64;
-        document.getElementById('captureBox').style.display = 'none';
+        document.getElementById('captureRow').style.display = 'none';
         document.getElementById('archiveSection').style.display = 'none';
         document.getElementById('editSection').style.display = 'flex';
 
@@ -607,7 +624,7 @@
     document.getElementById('archiveTotal').innerText = `(${archive.length})`;
 
     if (archive.length === 0) {
-      scrollContainer.innerHTML = `<div style="font-size:0.75rem; color:var(--muted); padding:10px;">لا توجد محطات بعد. اضغط على الكاميرا لتوثيق أول رحلة!</div>`;
+      scrollContainer.innerHTML = `<div style="font-size:0.75rem; color:var(--muted); padding:10px;">لا توجد محطات بعد. اختر الكاميرا أو الألبوم لتوثيق أول رحلة!</div>`;
       return;
     }
 
@@ -734,10 +751,11 @@
   }
 
   function resetCapture() {
-    document.getElementById('cameraInput').value = "";
+    document.getElementById('cameraDirectInput').value = "";
+    document.getElementById('galleryDirectInput').value = "";
     document.getElementById('previewImg').src = "";
     document.getElementById('editSection').style.display = 'none';
-    document.getElementById('captureBox').style.display = 'flex';
+    document.getElementById('captureRow').style.display = 'flex';
     document.getElementById('archiveSection').style.display = 'flex';
     map.invalidateSize();
   }
